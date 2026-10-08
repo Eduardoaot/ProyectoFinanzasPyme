@@ -1,11 +1,10 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Copy, Mic, Send, Sparkles, Square, Trash2, Volume2, VolumeX } from "lucide-react";
+import { Mic, Send, Sparkles, Square, Trash2, Volume2, VolumeX, X } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useChat, type Mensaje } from "../../context/Chat";
 import { useSesion } from "../../context/Sesion";
-import { useApi } from "../../hooks/useApi";
 import { useReconocimiento, vozSoportada } from "../../lib/voz";
 
 const PREGUNTAS_GUIA = [
@@ -40,8 +39,7 @@ function Markdown({ texto }: { texto: string }) {
 }
 
 function BurbujaClara({ m, ultimo }: { m: Mensaje; ultimo: boolean }) {
-  const { hablando, leer, callar, enviar } = useChat();
-  const [copiado, setCopiado] = useState(false);
+  const { hablando, leer, callar, enviar, limpiar } = useChat();
   const r = m.respuesta;
   return (
     <div className="msg clara">
@@ -86,27 +84,19 @@ function BurbujaClara({ m, ultimo }: { m: Mensaje; ultimo: boolean }) {
                 {hablando === m.id ? "Detener" : "Escuchar"}
               </button>
             )}
-            <button
-              className="btn chico fantasma"
-              onClick={() => {
-                navigator.clipboard?.writeText(JSON.stringify({ answer: r.answer }, null, 2));
-                setCopiado(true);
-                setTimeout(() => setCopiado(false), 1600);
-              }}
-              aria-label="Copiar respuesta como JSON"
-            >
-              <Copy size={14} />
-              {copiado ? "¡Copiado!" : "JSON"}
-            </button>
           </div>
         )}
-        {r && ultimo && r.sugerencias.length > 0 && (
+        {r && ultimo && (
           <div className="fila envolver" style={{ marginTop: 10, gap: 6 }}>
             {r.sugerencias.map((s) => (
               <button key={s} className="chip boton" onClick={() => enviar(s)}>
                 {s}
               </button>
             ))}
+            <button className="chip boton" onClick={limpiar} aria-label="Borrar conversación">
+              <Trash2 size={14} />
+              Borrar conversación
+            </button>
           </div>
         )}
       </div>
@@ -115,9 +105,8 @@ function BurbujaClara({ m, ultimo }: { m: Mensaje; ultimo: boolean }) {
 }
 
 export function Conversacion({ compacto = false }: { compacto?: boolean }) {
-  const { mensajes, ocupado, enviar, cancelar, limpiar, vozAutomatica, setVozAutomatica } = useChat();
+  const { mensajes, ocupado, enviar, cancelar, cerrarChat, vozAutomatica, setVozAutomatica } = useChat();
   const { empresa } = useSesion();
-  const estadoIA = useApi<{ disponible: boolean; modelo: string; modelo_instalado: boolean }>("/ia/estado");
   const [texto, setTexto] = useState("");
   const lista = useRef<HTMLDivElement>(null);
   const voz = useReconocimiento((dicho) => {
@@ -140,8 +129,6 @@ export function Conversacion({ compacto = false }: { compacto?: boolean }) {
       mandar();
     }
   };
-  const ia = estadoIA.datos;
-
   return (
     <div className="chat">
       <div className="chat-cabecera">
@@ -150,10 +137,6 @@ export function Conversacion({ compacto = false }: { compacto?: boolean }) {
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="nombre">Clara · tu asistente financiera</div>
-          <div className="estado">
-            <span className={`punto-vivo ${ia?.disponible ? "" : "apagado"}`} />
-            {ia?.disponible ? `IA local activa (${ia.modelo})` : "IA local apagada: respondo con plantillas"}
-          </div>
         </div>
         {vozSoportada.hablar && (
           <button
@@ -166,9 +149,14 @@ export function Conversacion({ compacto = false }: { compacto?: boolean }) {
             {vozAutomatica ? <Volume2 size={15} /> : <VolumeX size={15} />}
           </button>
         )}
-        {mensajes.length > 0 && (
-          <button className="btn icono chico fantasma" onClick={limpiar} aria-label="Borrar conversación" title="Borrar conversación">
-            <Trash2 size={15} />
+        {compacto && (
+          <button
+            className="btn icono chico btn-cerrar-chat"
+            onClick={cerrarChat}
+            aria-label="Cerrar chat"
+            title="Cerrar chat"
+          >
+            <X size={15} />
           </button>
         )}
       </div>
@@ -246,7 +234,7 @@ export function Conversacion({ compacto = false }: { compacto?: boolean }) {
           value={voz.escuchando ? voz.parcial : texto}
           onChange={(e) => setTexto(e.target.value)}
           onKeyDown={alTeclear}
-          placeholder="Pregúntale a Clara… ej. ¿cuánto gané este mes?"
+          placeholder="Pregúntale a Clara…"
           maxLength={500}
         />
         {ocupado && !texto.trim() ? (
