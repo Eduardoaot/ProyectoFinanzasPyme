@@ -1,0 +1,46 @@
+{
+  "_nota": "Parámetros fiscales por año de vigencia. Para actualizar un año nuevo, agrega otra llave (p. ej. \"2027\") sin tocar el código. VERIFICAR contra la LISR, la LIVA y el Anexo 8 de la RMF vigentes antes de usar en producción.",
+  "2026": {
+    "iva": {
+      "tasa_general": 0.16,
+      "tasa_cero": 0.0,
+      "limite_pago_efectivo": 2000.0,
+      "categorias_tasa_cero": ["basicos", "frutas y verduras", "lacteos", "panaderia", "abarrotes", "salchichoneria", "carnes", "tortilleria"],
+      "nombres_tasa_cero": ["agua ciel", "agua natural", "agua 1 l", "garrafon"]
+    },
+    "resico": {
+      "tabla_mensual": [
+        {"hasta": 25000.00, "tasa": 0.0100},
+        {"hasta": 50000.00, "tasa": 0.0110},
+        {"hasta": 83333.33, "tasa": 0.0150},
+        {"hasta": 208333.33, "tasa": 0.0200},
+        {"hasta": 291666.67, "tasa": 0.0250}
+      ],
+      "limite_anual": 3500000.00,
+      "retencion_morales": 0.0125,
+      "aviso_limite_pct": 0.85
+    },
+    "tarifa_art_96_mensual": [
+      {"limite_inferior": 0.01,       "cuota_fija": 0.00,         "tasa": 0.0192},
+      {"limite_inferior": 746.05,     "cuota_fija": 14.32,        "tasa": 0.0640},
+      {"limite_inferior": 6332.06,    "cuota_fija": 371.83,       "tasa": 0.1088},
+      {"limite_inferior": 11128.02,   "cuota_fija": 893.63,       "tasa": 0.1600},
+      {"limite_inferior": 12935.83,   "cuota_fija": 1182.88,      "tasa": 0.1792},
+      {"limite_inferior": 15487.72,   "cuota_fija": 1640.18,      "tasa": 0.2136},
+      {"limite_inferior": 31236.50,   "cuota_fija": 5004.12,      "tasa": 0.2352},
+      {"limite_inferior": 49233.01,   "cuota_fija": 9236.89,      "tasa": 0.3000},
+      {"limite_inferior": 93993.91,   "cuota_fija": 22665.17,     "tasa": 0.3200},
+      {"limite_inferior": 125325.21,  "cuota_fija": 32691.18,     "tasa": 0.3400},
+      {"limite_inferior": 375975.62,  "cuota_fija": 117912.32,    "tasa": 0.3500}
+    ],
+    "moral": {"tasa_isr": 0.30},
+    "ptu": {"porcentaje": 0.10},
+    "dia_pago": 17,
+    "depreciacion": {"mobiliario_equipo": 0.10, "equipo_computo": 0.30, "autos": 0.25, "tope_auto": 175000.00},
+    "deducciones": {
+      "restaurantes": 0.085,
+      "renta_auto_diario": 200.0,
+      "prestaciones_exentas": 0.47
+    }
+  }
+}

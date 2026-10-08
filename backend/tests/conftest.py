@@ -58,7 +58,7 @@ def base_de_datos():
 def llm(monkeypatch):
     falso = LLMFalso()
     for modulo in ("app.llm.ollama", "app.chat.asistente", "app.chat.intenciones", "app.alerts.redaccion",
-                   "app.ingestion.mapeo", "app.api.rutas_chat"):
+                   "app.ingestion.mapeo", "app.api.rutas_chat", "app.chat.apartados"):
         monkeypatch.setattr(f"{modulo}.get_llm", lambda: falso)
     return falso
 

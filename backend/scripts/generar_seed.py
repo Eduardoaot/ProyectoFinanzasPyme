@@ -354,6 +354,69 @@ for _p in ABARROTES.productos:
 
 EMPRESAS = [PAPELERIA, ABARROTES, BOUTIQUE]
 
+# ---------------------------------------------------------------------------
+# Deudas de ejemplo (una situación distinta por negocio) y gastos sin factura
+# ---------------------------------------------------------------------------
+
+DEUDAS_DEMO: dict[str, list[dict]] = {
+    # Papelería: situación sana (deudas chicas y baratas).
+    "papeleria": [
+        dict(acreedor="Crédito Simple Santander", tipo="credito_simple", original=25000, saldo=14000, tasa=0.24, plazo=18,
+             pago=None, limite=None, inicio=dt.date(2025, 12, 5), corte=None, dia_pago=5, iva=1, comision=0, historial=6),
+        dict(acreedor="Proveedor Papelera del Centro", tipo="proveedor", original=4500, saldo=4500, tasa=0.0, plazo=None,
+             pago=4500, limite=None, inicio=dt.date(2026, 9, 15), corte=None, dia_pago=15, iva=0, comision=0, historial=0),
+    ],
+    # Abarrotes: situación apretada.
+    "abarrotes": [
+        dict(acreedor="Tarjeta BBVA Negocios", tipo="tarjeta_credito", original=0, saldo=8450, tasa=0.54, plazo=None,
+             pago=None, limite=20000, inicio=dt.date(2024, 11, 2), corte=12, dia_pago=2, iva=1, comision=0, historial=6),
+        dict(acreedor="Crédito Simple Banorte", tipo="credito_simple", original=60000, saldo=41200, tasa=0.28, plazo=24,
+             pago=3293, limite=None, inicio=dt.date(2026, 1, 28), corte=None, dia_pago=28, iva=1, comision=0, historial=8),
+        dict(acreedor="Proveedor de refrescos", tipo="proveedor", original=6000, saldo=6000, tasa=0.0, plazo=None,
+             pago=6000, limite=None, inicio=dt.date(2026, 9, 15), corte=None, dia_pago=30, iva=0, comision=0, historial=0),
+        dict(acreedor="Préstamo familiar", tipo="prestamo_personal", original=15000, saldo=9000, tasa=0.0, plazo=None,
+             pago=1500, limite=None, inicio=dt.date(2026, 1, 10), corte=None, dia_pago=10, iva=0, comision=0, historial=4),
+    ],
+    # Boutique: negocio en riesgo (tarjeta casi al tope y un préstamo muy caro; la cobertura queda por debajo de 1).
+    "boutique": [
+        dict(acreedor="Tarjeta Santander Negocios", tipo="tarjeta_credito", original=0, saldo=26500, tasa=0.58, plazo=None,
+             pago=None, limite=30000, inicio=dt.date(2024, 12, 10), corte=8, dia_pago=28, iva=1, comision=0, historial=6),
+        dict(acreedor="Préstamo de financiera rápida", tipo="prestamo_personal", original=40000, saldo=33000, tasa=0.78, plazo=12,
+             pago=4300, limite=None, inicio=dt.date(2026, 4, 15), corte=None, dia_pago=15, iva=1, comision=150, historial=5),
+        dict(acreedor="Proveedor de ropa Tendencia", tipo="proveedor", original=18000, saldo=18000, tasa=0.0, plazo=None,
+             pago=9000, limite=None, inicio=dt.date(2026, 9, 5), corte=None, dia_pago=5, iva=0, comision=0, historial=0),
+    ],
+}
+
+# Gastos pequeños que en la vida real suelen pagarse en efectivo y sin factura (para mostrar el módulo de impuestos).
+SIN_FACTURA = ("Recargas", "Garrafones", "Papelería interna", "Reparaciones menores", "Transporte", "Gasolina",
+               "Arreglos y ajustes", "Merma", "Limpieza", "Bolsas")
+FONDO_EMERGENCIA = {"papeleria": 5000, "abarrotes": 0, "boutique": 0}
+CON_TRABAJADORES = {"papeleria": 0, "abarrotes": 1, "boutique": 1}
+
+
+def pagos_historicos(d: dict, id_deuda: int, id_empresa: int, ids: dict, pago: float) -> list[dict]:
+    """Abonos de los últimos meses, reconstruidos hacia atrás desde el saldo actual (capital, interés e IVA coherentes)."""
+    filas, saldo = [], float(d["saldo"])
+    i = d["tasa"] / 12
+    for k in range(d["historial"]):
+        mes = (FIN.year * 12 + FIN.month - 1) - k
+        anio, mes0 = divmod(mes, 12)
+        dia = min(d["dia_pago"], calendar.monthrange(anio, mes0 + 1)[1])
+        fecha = dt.date(anio, mes0 + 1, dia)
+        if fecha > FIN:
+            continue
+        i_ef = i * (1.16 if d["iva"] else 1.0)
+        previo = (saldo + pago) / (1 + i_ef)
+        interes = previo * i
+        iva = interes * 0.16 if d["iva"] else 0.0
+        ids["pago"] += 1
+        filas.append({"id_pago": ids["pago"], "id_empresa": id_empresa, "id_deuda": id_deuda, "fecha": fecha, "monto": d2(pago),
+                      "capital": d2(max(0.0, pago - interes - iva)), "interes": d2(interes), "iva": d2(iva)})
+        saldo = previo
+    return filas
+
+
 USUARIOS = [
     # (nombre, email, [(clave_empresa, rol)])
     ("Ana Ruiz", "ana.ruiz@example.com", [("papeleria", "dueno")]),
@@ -568,8 +631,9 @@ def cuadrar_caso_base(emp: Empresa, res: Resultado, gastos: list[list], rng: np.
 
 def construir() -> dict[str, list[dict]]:
     filas: dict[str, list[dict]] = {t: [] for t in ("usuarios", "empresas", "usuarios_empresas", "productos_cat",
-                                                     "historial_ventas", "compras_producto", "gastos_operativos")}
-    ids = {"producto": 0, "venta": 0, "compra": 0, "gasto": 0}
+                                                     "historial_ventas", "compras_producto", "gastos_operativos",
+                                                     "deudas", "pagos_deuda")}
+    ids = {"producto": 0, "venta": 0, "compra": 0, "gasto": 0, "deuda": 0, "pago": 0}
     id_por_clave: dict[str, int] = {}
 
     for id_empresa, emp in enumerate(EMPRESAS, start=1):
@@ -614,6 +678,9 @@ def construir() -> dict[str, list[dict]]:
             "id_empresa": id_empresa, "nombre_negocio": emp.nombre, "giro": emp.giro, "ciudad": emp.ciudad,
             "regimen_fiscal": emp.regimen, "saldo_inicial": d2(emp.saldo_inicial), "fecha_saldo_inicial": INICIO,
             "umbrales_alerta": None, "fecha_registro": dt.datetime.combine(INICIO, dt.time(9, 0)),
+            "tipo_persona": "fisica", "factura_a_morales": 0, "pct_ventas_morales": 0,
+            "tiene_trabajadores": CON_TRABAJADORES[emp.clave], "coeficiente_utilidad": 0.2,
+            "fondo_emergencia": d2(FONDO_EMERGENCIA[emp.clave]),
         })
 
         id_producto = {}
@@ -645,10 +712,31 @@ def construir() -> dict[str, list[dict]]:
             })
         for g in gastos:
             ids["gasto"] += 1
+            sin_factura = any(clave.lower() in g[1].lower() for clave in SIN_FACTURA)
             filas["gastos_operativos"].append({
                 "id_gasto": ids["gasto"], "id_empresa": id_empresa, "fecha": g[0], "concepto": g[1],
                 "categoria": g[2], "tipo": g[3], "monto": d2(g[4]), "id_importacion": None,
+                "tiene_cfdi": 0 if sin_factura else 1, "medio_pago": "efectivo" if sin_factura else "transferencia",
+                "uso": "negocio",
             })
+
+        for d in DEUDAS_DEMO[emp.clave]:
+            ids["deuda"] += 1
+            filas["deudas"].append({
+                "id_deuda": ids["deuda"], "id_empresa": id_empresa, "acreedor": d["acreedor"], "tipo": d["tipo"],
+                "monto_original": d2(d["original"]), "saldo_actual": d2(d["saldo"]), "tasa_interes_anual": d["tasa"], "cat": None,
+                "aplica_iva_intereses": d["iva"], "plazo_meses": d["plazo"],
+                "pago_mensual": None if d["pago"] is None else d2(d["pago"]),
+                "limite_credito": None if d["limite"] is None else d2(d["limite"]), "fecha_inicio": d["inicio"],
+                "dia_corte": d["corte"], "dia_limite_pago": d["dia_pago"], "comisiones_mensuales": d2(d["comision"]),
+                "tasa_moratoria_anual": None, "uso": "negocio", "estado": "activa",
+            })
+            if d["historial"]:
+                pago = d["pago"] or max(300.0, round(float(d["saldo"]) * 0.06))
+                if d["tipo"] == "credito_simple" and d["pago"] is None:
+                    i = d["tasa"] / 12
+                    pago = round(d["original"] * i / (1 - (1 + i) ** -d["plazo"]), 2)
+                filas["pagos_deuda"].extend(pagos_historicos(d, ids["deuda"], id_empresa, ids, pago))
 
     for id_usuario, (nombre, email, accesos) in enumerate(USUARIOS, start=1):
         filas["usuarios"].append({
@@ -669,6 +757,8 @@ def construir() -> dict[str, list[dict]]:
 def sql_valor(valor) -> str:
     if valor is None:
         return "NULL"
+    if isinstance(valor, bool):
+        return str(int(valor))
     if isinstance(valor, (int, float, Decimal)):
         return str(valor)
     if isinstance(valor, dt.datetime):

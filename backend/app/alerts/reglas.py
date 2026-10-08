@@ -29,7 +29,7 @@ class Alerta(BaseModel):
     titulo: str
     mensaje: str
     accion: str
-    modulo: Literal["resumen", "finanzas", "productos", "flujo"]
+    modulo: Literal["resumen", "finanzas", "productos", "flujo", "proyecciones", "impuestos", "deudas"]
     metricas: dict[str, str]
     redactado_por_ia: bool = False
 
