@@ -236,3 +236,10 @@
   .filtros .input { width: 100%; }
   .er-linea { grid-template-columns: minmax(0, 1fr) 104px 56px; }
 }
+
+/* ---------- Proyecciones, impuestos y deudas ---------- */
+.clara-resumen { gap: 10px; border-left: 3px solid var(--celeste); }
+.clara-resumen .avatar { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--celeste-soft); color: var(--celeste-strong); }
+input[type="range"] { width: 100%; accent-color: var(--celeste); height: 28px; }
+input[type="checkbox"] { accent-color: var(--celeste); width: 16px; height: 16px; }
+.cajon form.cuerpo { display: flex; flex-direction: column; gap: 14px; }

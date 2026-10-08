@@ -126,6 +126,8 @@ cd frontend; npm test        # 14 pruebas: formato, periodos, voz y componentes
 
 Las pruebas del backend usan SQLite en memoria con el dataset completo y un LLM simulado, así que no requieren MySQL ni Ollama.
 
+> Proyecciones, impuestos y deudas: ver [docs/predictivo.md](docs/predictivo.md). Después de actualizar el código ejecuta `alembic upgrade head` (migración `0003`).
+
 ## 7. Cómo subir un Excel (usuario nuevo)
 
 1. Crea tu cuenta y entra a **Importar datos → Tutorial**.

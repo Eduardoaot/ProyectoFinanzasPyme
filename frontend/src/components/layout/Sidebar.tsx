@@ -3,9 +3,12 @@ import {
   Bell,
   Bot,
   ChartColumnBig,
+  CreditCard,
   FileSpreadsheet,
+  Landmark,
   LayoutDashboard,
   Package,
+  TrendingUp,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -19,6 +22,12 @@ export const MODULOS: { ruta: string; texto: string; icono: LucideIcon; pregunta
   { ruta: "/productos", texto: "Productos", icono: Package, pregunta: "¿Qué producto me deja más?" },
   { ruta: "/flujo", texto: "Flujo de efectivo", icono: Wallet, pregunta: "¿Me va a alcanzar?" },
   { ruta: "/alertas", texto: "Alertas", icono: Bell, pregunta: "¿Qué atiendo primero?" },
+];
+
+export const PLANEACION: { ruta: string; texto: string; icono: LucideIcon; pregunta: string }[] = [
+  { ruta: "/proyecciones", texto: "Proyecciones y consejos", icono: TrendingUp, pregunta: "¿Cómo me va a ir? ¿Qué hago?" },
+  { ruta: "/impuestos", texto: "Impuestos", icono: Landmark, pregunta: "¿Cuánto debo pagar al SAT?" },
+  { ruta: "/deudas", texto: "Deudas", icono: CreditCard, pregunta: "¿Cuánto debo y cuándo termino?" },
 ];
 
 export const HERRAMIENTAS = [
@@ -53,6 +62,8 @@ export function Sidebar({ alertasRojas, alNavegar }: { alertasRojas: number; alN
       <nav>
         <span className="seccion">Tu negocio</span>
         {MODULOS.map((m) => item(m.ruta, m.texto, m.icono, m.ruta === "/alertas" ? alertasRojas : undefined))}
+        <span className="seccion">Planea y cumple</span>
+        {PLANEACION.map((m) => item(m.ruta, m.texto, m.icono))}
         <span className="seccion">Herramientas</span>
         {HERRAMIENTAS.map((h) => item(h.ruta, h.texto, h.icono))}
       </nav>

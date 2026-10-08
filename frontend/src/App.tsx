@@ -15,6 +15,9 @@ const Finanzas = lazy(() => import("./pages/Finanzas").then((m) => ({ default: m
 const Productos = lazy(() => import("./pages/Productos").then((m) => ({ default: m.Productos })));
 const Flujo = lazy(() => import("./pages/Flujo").then((m) => ({ default: m.Flujo })));
 const Alertas = lazy(() => import("./pages/Alertas").then((m) => ({ default: m.Alertas })));
+const Proyecciones = lazy(() => import("./pages/Proyecciones").then((m) => ({ default: m.Proyecciones })));
+const Impuestos = lazy(() => import("./pages/Impuestos").then((m) => ({ default: m.Impuestos })));
+const Deudas = lazy(() => import("./pages/Deudas").then((m) => ({ default: m.Deudas })));
 const Importar = lazy(() => import("./pages/Importar").then((m) => ({ default: m.Importar })));
 const Asistente = lazy(() => import("./pages/Asistente").then((m) => ({ default: m.Asistente })));
 
@@ -79,6 +82,9 @@ function Rutas() {
                   <Route path="productos" element={<Productos />} />
                   <Route path="flujo" element={<Flujo />} />
                   <Route path="alertas" element={<Alertas />} />
+                  <Route path="proyecciones" element={<Proyecciones />} />
+                  <Route path="impuestos" element={<Impuestos />} />
+                  <Route path="deudas" element={<Deudas />} />
                   <Route path="importar" element={<Importar />} />
                   <Route path="asistente" element={<Asistente />} />
                   <Route path="*" element={<NoEncontrada />} />

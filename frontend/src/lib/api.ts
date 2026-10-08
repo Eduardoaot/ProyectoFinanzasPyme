@@ -87,6 +87,13 @@ export const api = {
       body: JSON.stringify(cuerpo),
     }).then((r) => manejar<T>(r));
   },
+  patch<T>(ruta: string, cuerpo: unknown): Promise<T> {
+    return fetch(url(ruta), {
+      method: "PATCH",
+      headers: cabeceras({ "Content-Type": "application/json" }),
+      body: JSON.stringify(cuerpo),
+    }).then((r) => manejar<T>(r));
+  },
   delete<T>(ruta: string): Promise<T> {
     return fetch(url(ruta), { method: "DELETE", headers: cabeceras() }).then((r) => manejar<T>(r));
   },

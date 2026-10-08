@@ -9,7 +9,10 @@ const NIVEL = {
   verde: { Icono: CheckCircle2, texto: "Bien" },
 } as const;
 
-const RUTA = { resumen: "/", finanzas: "/finanzas", productos: "/productos", flujo: "/flujo" } as const;
+const RUTA = {
+  resumen: "/", finanzas: "/finanzas", productos: "/productos", flujo: "/flujo",
+  proyecciones: "/proyecciones", impuestos: "/impuestos", deudas: "/deudas",
+} as const;
 
 export function TarjetaAlerta({ alerta, indice = 0, compacta = false, redactando = false }: {
   alerta: Alerta;

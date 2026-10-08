@@ -47,6 +47,10 @@ Registro breve de las decisiones importantes y su porqué (proyecto de aprendiza
 - Rol `consulta` (p. ej., el contador): solo lectura. No puede importar ni cambiar umbrales (`empresa_editable`).
 - Los logs no incluyen cifras ni contenido enviado al LLM.
 
+## Proyecciones, impuestos y deudas (aprobado el 2026-10-08)
+
+Los impuestos, que CLAUDE.md §3 dejaba para la fase 2, se adelantan a petición expresa del dueño del proyecto, junto con proyecciones y deudas. El pronóstico base es estadístico y determinista (promedio de 8 semanas × índice por día de la semana + tendencia limitada a ±15 %), no un prompt. Detalle, supuestos y cómo probar: [predictivo.md](predictivo.md).
+
 ## Pronóstico
 
 - `ForecastService` (Protocol) con la implementación `PromedioMovil(ventana=30)`, que también produce una banda de ±1.28σ.

@@ -16,6 +16,8 @@ erDiagram
     importaciones |o--o{ historial_ventas : "deshacer"
     importaciones |o--o{ compras_producto : ""
     importaciones |o--o{ gastos_operativos : ""
+    empresas ||--o{ deudas : ""
+    deudas ||--o{ pagos_deuda : "abonos"
 ```
 
 Montos en `DECIMAL(12,2)` (MXN). Toda tabla de negocio lleva `id_empresa`.
@@ -27,6 +29,8 @@ Montos en `DECIMAL(12,2)` (MXN). Toda tabla de negocio lleva `id_empresa`.
 | `usuarios_empresas` | Permisos | `id_usuario`, `id_empresa`, `rol` (`dueno` \| `consulta`) |
 | `productos_cat` | Registro de productos | `sku_o_nombre` (único por empresa), `categoria`, `unidad`, `stock_actual`, `stock_minimo`, `costo_promedio`, `precio_venta` |
 | `historial_ventas` | Registro de ventas | `id_producto`, `fecha_hora`, `cantidad_vendida`, `precio_unitario`, `costo_unitario` |
+| `deudas` | Deudas del negocio (tarjetas, créditos, proveedores, préstamos) | `acreedor`, `tipo`, `saldo_actual`, `tasa_interes_anual`, `plazo_meses`, `pago_mensual`, `limite_credito`, `dia_limite_pago`, `estado` |
+| `pagos_deuda` | Abonos a una deuda | `id_deuda`, `fecha`, `monto`, `capital`, `interes`, `iva` |
 | `compras_producto` | Registro de compras de producto | `id_producto`, `fecha`, `cantidad`, `costo_unitario`, `proveedor` |
 | `gastos_operativos` | Registro de gastos operativos | `fecha`, `concepto`, `categoria`, `tipo` (`fijo` \| `variable`), `monto` |
 | `importaciones` | Historial de cargas | `nombre_archivo`, `tipo_datos`, `estado`, `filas_ok`, `filas_con_error`, `detalle_errores` (JSON) |

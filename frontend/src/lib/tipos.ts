@@ -219,7 +219,7 @@ export interface Alerta {
   titulo: string;
   mensaje: string;
   accion: string;
-  modulo: "resumen" | "finanzas" | "productos" | "flujo";
+  modulo: "resumen" | "finanzas" | "productos" | "flujo" | "proyecciones" | "impuestos" | "deudas";
   metricas: Record<string, string>;
   redactado_por_ia: boolean;
 }
