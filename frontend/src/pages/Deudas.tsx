@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Banknote, CalendarClock, CreditCard, Flag, Pencil, Plus, Scale, Trash2, TrendingDown, X } from "lucide-react";
+import { Banknote, CalendarDays, ChartColumnStacked, CreditCard, Flag, Landmark, ListOrdered, Pencil, Plus, Trash2, TrendingDown, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { TarjetaAlerta } from "../components/AlertaTarjeta";
@@ -218,8 +218,8 @@ export function Deudas() {
   const kp = p?.kpis;
   const e = p?.estrategias;
   return (
-    <Pagina eyebrow="Deudas" titulo="¿Cuánto debes y cuándo terminas de pagar?"
-      descripcion="Todas tus deudas en un solo lugar: cuánto te cuestan, cuándo vencen y cuál conviene pagar primero."
+    <Pagina titulo="Deudas"
+      descripcion="Saldo, costo mensual, fechas de pago y orden sugerido para liquidar cada deuda."
       acciones={editable && <button className="btn primario" onClick={() => setCajon({ editando: null })}><Plus size={16} /> Agregar deuda</button>}>
       {pn.error && <Aviso tipo="error">{pn.error}</Aviso>}
       {aviso && <Aviso tipo="error">{aviso}</Aviso>}
@@ -231,16 +231,19 @@ export function Deudas() {
       ) : (
         <>
           <div className="grid grid-kpi">
-            <KpiCard indice={0} etiqueta="Lo que debes" tecnico="Deuda total (saldo)" valor={kp.deuda_total} formato={(n) => dinero(Math.round(n), false)} nota={`a un año: ${dineroCompacto(kp.deuda_corto_plazo)} se paga`} />
-            <KpiCard indice={1} etiqueta="Pagas al mes" tecnico="Pago mensual total (incluye comisiones)" valor={kp.pago_mensual_total} formato={(n) => dinero(Math.round(n), false)}
-              nota={`próx. 7 días: ${dineroCompacto(kp.proximos_pagos["7_dias"])} · 30 días: ${dineroCompacto(kp.proximos_pagos["30_dias"])}`} />
-            <KpiCard indice={2} etiqueta="Te cuesta de intereses" tecnico="Costo mensual de la deuda = intereses + IVA + comisiones" valor={kp.costo_mensual} formato={(n) => dinero(Math.round(n), false)} nota="cada mes" />
-            <KpiCard indice={3} etiqueta="De tus ventas se va en deudas" tecnico="Pago mensual total / ventas mensuales proyectadas" valor={kp.pct_ventas === null ? null : kp.pct_ventas * 100} formato={(n) => `${n.toFixed(0)}%`}
-              nota={kp.semaforo_pct_ventas === "verde" ? "sano (menos de 15%)" : kp.semaforo_pct_ventas === "amarillo" ? "atención (15% a 30%)" : "alto (más de 30%)"} />
-            <KpiCard indice={4} etiqueta="¿Te alcanza para pagarlas?" tecnico="Cobertura del servicio de deuda (DSCR) = utilidad mensual / pagos de deuda" valor={kp.dscr} formato={(n) => `${n.toFixed(2)} veces`}
-              nota={kp.semaforo_dscr === "verde" ? "sano (1.25 o más)" : kp.semaforo_dscr === "amarillo" ? "justo (1.0 a 1.25)" : "no alcanza (menos de 1)"} />
-            <KpiCard indice={5} etiqueta="Libre de deudas" tecnico="Fecha en que terminas con el plan actual" valor={kp.fecha_libre ? new Date(kp.fecha_libre).getFullYear() : null} formato={(n) => String(Math.round(n))}
-              nota={kp.fecha_libre ? fechaLarga(kp.fecha_libre) : "con el plan actual no se liquida"} />
+            <KpiCard indice={0} etiqueta="Deuda total" tecnico={`Suma de saldos. ${dinero(kp.deuda_corto_plazo, false)} se paga en los próximos 12 meses.`} valor={kp.deuda_total}
+              formato={(n) => dinero(Math.round(n), false)} nota={`${dineroCompacto(kp.deuda_corto_plazo)} en 12 meses`} />
+            <KpiCard indice={1} etiqueta="Pago mensual" tecnico={`Pago mensual total de todas tus deudas, con comisiones. Próximos 7 días: ${dinero(kp.proximos_pagos["7_dias"], false)}.`}
+              valor={kp.pago_mensual_total} formato={(n) => dinero(Math.round(n), false)} nota={`${dineroCompacto(kp.proximos_pagos["30_dias"])} en 30 días`} />
+            <KpiCard indice={2} etiqueta="Intereses al mes" tecnico="Costo mensual de la deuda = intereses + IVA de intereses + comisiones" valor={kp.costo_mensual} formato={(n) => dinero(Math.round(n), false)} nota="con IVA y comisiones" />
+            <KpiCard indice={3} etiqueta="Ventas para deudas" tecnico="Pago mensual total / ventas mensuales proyectadas. Sano: menos de 15%; atención: 15% a 30%; alto: más de 30%."
+              valor={kp.pct_ventas === null ? null : kp.pct_ventas * 100} formato={(n) => `${n.toFixed(0)}%`}
+              nota={kp.semaforo_pct_ventas === "verde" ? "sano" : kp.semaforo_pct_ventas === "amarillo" ? "atención" : "alto"} />
+            <KpiCard indice={4} etiqueta="Cobertura de pagos" tecnico="Utilidad mensual / pagos de deuda (DSCR). Sano: 1.25x o más; justo: 1.0x a 1.25x; menos de 1x no alcanza."
+              valor={kp.dscr} formato={(n) => `${n.toFixed(2)}x`}
+              nota={kp.semaforo_dscr === "verde" ? "sano" : kp.semaforo_dscr === "amarillo" ? "justo" : "no alcanza"} />
+            <KpiCard indice={5} etiqueta="Sin deudas en" tecnico="Fecha en que terminas de pagar todo con el plan actual" valor={kp.fecha_libre ? new Date(kp.fecha_libre).getFullYear() : null} formato={(n) => String(Math.round(n))}
+              nota={kp.fecha_libre ? fechaCorta(kp.fecha_libre) : "no se liquida"} />
           </div>
 
           {p.alertas.length > 0 && <div className="pila">{p.alertas.map((a, i) => <TarjetaAlerta key={a.id} alerta={a} indice={i} compacta />)}</div>}
@@ -256,7 +259,7 @@ export function Deudas() {
 
           <div className="grid grid-2">
             <Tarjeta retraso={0.04}>
-              <TituloTarjeta icono={TrendingDown} titulo="Tu deuda bajando" sub="Cuánto debes mes con mes hasta llegar a cero" />
+              <TituloTarjeta icono={TrendingDown} titulo="Saldo proyectado" sub="Cuánto deberás mes con mes hasta llegar a cero, según cada plan" />
               <Leyenda items={[{ nombre: "Plan actual", color: SERIE.ventas, tipo: "linea" }, { nombre: "Avalancha", color: SERIE.utilidad, tipo: "linea" }, { nombre: "Bola de nieve", color: SERIE.gastos, tipo: "punteada" }]} />
               <div style={{ height: 260 }}>
                 <ResponsiveContainer>
@@ -273,7 +276,7 @@ export function Deudas() {
               </div>
             </Tarjeta>
             <Tarjeta retraso={0.08}>
-              <TituloTarjeta icono={Scale} titulo="¿A dónde se va tu pago?" sub="Próximos 12 meses: lo que baja tu deuda vs. lo que se va en intereses" />
+              <TituloTarjeta icono={ChartColumnStacked} titulo="Composición de tus pagos" sub="Próximos 12 meses: abono a la deuda contra intereses, IVA y comisiones" />
               <Leyenda items={[{ nombre: "Abono a la deuda", color: SERIE.ventas }, { nombre: "Intereses, IVA y comisiones", color: SERIE.gastos }]} />
               <div style={{ height: 260 }}>
                 <ResponsiveContainer>
@@ -292,7 +295,7 @@ export function Deudas() {
 
           {e && (
             <Tarjeta retraso={0.12}>
-              <TituloTarjeta icono={Flag} titulo="¿Cuál deuda pago primero?" sub="Comparamos dos formas de usar el mismo dinero cada mes" />
+              <TituloTarjeta icono={ListOrdered} titulo="Orden de pago recomendado" sub="Avalancha (tasa más alta primero) contra bola de nieve (saldo más chico primero), con el mismo dinero al mes" />
               <div className="fila envolver">
                 <div className="campo" style={{ maxWidth: 260 }}>
                   <label htmlFor="extra">Dinero extra al mes para tus deudas ($)</label>
@@ -326,7 +329,7 @@ export function Deudas() {
 
           <div className="grid grid-2">
             <Tarjeta retraso={0.16}>
-              <TituloTarjeta icono={CalendarClock} titulo="Pagos de los próximos 60 días" />
+              <TituloTarjeta icono={CalendarDays} titulo="Calendario de pagos" sub="Próximos 60 días" />
               {(p.calendario ?? []).length === 0 ? <p className="muted">No tienes pagos en los próximos 60 días.</p> : (
                 <ul className="pila" style={{ listStyle: "none", margin: 0, padding: 0, gap: 8 }}>
                   {(p.calendario ?? []).map((c, i) => (
@@ -336,7 +339,7 @@ export function Deudas() {
               )}
             </Tarjeta>
             <Tarjeta retraso={0.2}>
-              <TituloTarjeta icono={Scale} titulo="¿Puedo pedir otro crédito?" sub="Una referencia, no una oferta" />
+              <TituloTarjeta icono={Landmark} titulo="Capacidad para un nuevo crédito" sub="Pago máximo que tu utilidad soporta sin poner en riesgo tus pagos actuales. Es una referencia, no una oferta." />
               <div className="pila">
                 <div className="dato"><span className="k">Pago mensual máximo recomendado</span><span className="v num">{dinero(kp.capacidad_endeudamiento.pago_maximo, false)}</span></div>
                 <div className="dato"><span className="k">Crédito equivalente a {kp.capacidad_endeudamiento.plazo_meses} meses</span><span className="v num">{dinero(kp.capacidad_endeudamiento.monto_equivalente, false)}</span></div>

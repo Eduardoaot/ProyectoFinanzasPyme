@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDownUp, Award, Boxes, PackageSearch, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { EJE, Leyenda, SERIE, TooltipGrafica } from "../components/charts/comun";
 import { Aviso, Semaforo, Tarjeta, TarjetaCargando, TituloTarjeta } from "../components/ui/basicos";
@@ -12,6 +12,8 @@ import { dinero, dineroCompacto, fechaCorta, numero, pct } from "../lib/formato"
 import type { ProductoMetricas, Productos as TipoProductos, Pronostico, Semaforo as TipoSemaforo } from "../lib/tipos";
 
 type Orden = "utilidad" | "ventas" | "margen_actual" | "dias_inventario" | "nombre";
+
+const ETIQUETA_SEMAFORO: Record<TipoSemaforo, string> = { rojo: "Por agotarse", amarillo: "Vigilar", verde: "Suficiente", sin_movimiento: "Sin ventas" };
 
 function DetalleProducto({ p, idEmpresa, cerrar }: { p: ProductoMetricas; idEmpresa: number; cerrar: () => void }) {
   const fc = useApi<Pronostico>(`/empresas/${idEmpresa}/forecast`, { id_producto: p.id_producto, serie: "unidades", dias: 30 });
@@ -71,7 +73,7 @@ function DetalleProducto({ p, idEmpresa, cerrar }: { p: ProductoMetricas; idEmpr
                     <YAxis {...EJE} width={44} />
                     <Tooltip content={<TooltipGrafica formato={(v) => `${numero(v)} ${p.unidad}`} titulo={(l) => fechaCorta(String(l))}
                       nombres={{ real: "Vendido", estimado: "Estimado" }} />} />
-                    <Area dataKey="rango" stroke="none" fill={SERIE.ventas} fillOpacity={0.12} isAnimationActive={false} name="_rango" />
+                    <Area dataKey="rango" stroke="none" fill={SERIE.ventas} fillOpacity={0.12} isAnimationActive={false} name="Rango probable" />
                     <Line dataKey="real" stroke={SERIE.ventas} strokeWidth={2} dot={false} animationDuration={900} />
                     <Line dataKey="estimado" stroke={SERIE.ventas} strokeWidth={2} strokeDasharray="5 4" dot={false} animationDuration={900} />
                   </ComposedChart>
@@ -102,6 +104,12 @@ export function Productos() {
   const [semaforo, setSemaforo] = useState<TipoSemaforo | "">("");
   const [orden, setOrden] = useState<{ campo: Orden; asc: boolean }>({ campo: "utilidad", asc: false });
   const [abierto, setAbierto] = useState<ProductoMetricas | null>(null);
+  const tablaRef = useRef<HTMLDivElement>(null);
+  // El recuadro del semáforo filtra la tabla y la trae a la vista, para que se vea el efecto del clic.
+  const verEnTabla = (s: TipoSemaforo) => {
+    setSemaforo(semaforo === s ? "" : s);
+    tablaRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  };
 
   const datos = pr.datos;
   const categorias = useMemo(() => [...new Set(datos?.productos.map((p) => p.categoria))].sort(), [datos]);
@@ -129,8 +137,8 @@ export function Productos() {
   );
 
   return (
-    <Pagina eyebrow="Productos" titulo="¿Qué producto te deja más?"
-      descripcion="Ventas, costo y ganancia de cada producto, y el semáforo de tu inventario. Haz clic en un producto para ver su detalle y su estimación de ventas.">
+    <Pagina titulo="Productos e inventario"
+      descripcion={datos ? `Ventas, costo, ganancia y existencias por producto · ${datos.periodo.etiqueta}. Haz clic en un producto para ver su detalle.` : undefined}>
       {pr.error && <Aviso tipo="error">{pr.error}</Aviso>}
       {!datos ? (
         <div className="grid grid-2">
@@ -161,24 +169,31 @@ export function Productos() {
                 {(["rojo", "amarillo", "verde", "sin_movimiento"] as TipoSemaforo[]).map((s, i) => (
                   <motion.button key={s} className="card interactiva centrado" style={{ padding: 16, cursor: "pointer", alignItems: "center", gap: 8,
                     outline: semaforo === s ? "2px solid var(--celeste)" : undefined }}
-                    onClick={() => setSemaforo(semaforo === s ? "" : s)} aria-pressed={semaforo === s}
+                    onClick={() => verEnTabla(s)} aria-pressed={semaforo === s}
                     initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 + i * 0.05 }} whileTap={{ scale: 0.97 }}>
                     <strong className="num" style={{ fontSize: "var(--fs-xl)" }}>{datos.inventario[s]}</strong>
-                    <Semaforo estado={s} texto={{ rojo: "Por agotarse", amarillo: "Vigilar", verde: "Suficiente", sin_movimiento: "Sin ventas" }[s]} />
+                    <Semaforo estado={s} texto={ETIQUETA_SEMAFORO[s]} />
                   </motion.button>
                 ))}
               </div>
               <p className="mini muted justificado">
                 Rojo: se acaba en {numero(empresa?.umbrales.dias_inventario_bajo)} días o menos al ritmo de venta de los últimos 30 días.
-                Amarillo: hasta el doble. Toca un recuadro para filtrar la tabla.
+                Amarillo: hasta el doble. Toca un recuadro para ver esos productos en la tabla.
               </p>
             </Tarjeta>
           </div>
 
+          <div ref={tablaRef} style={{ scrollMarginTop: 80 }}>
           <Tarjeta retraso={0.1} interactiva={false}>
             <div className="fila-entre envolver">
               <TituloTarjeta icono={PackageSearch} titulo="Todos tus productos" sub={`${filtrados.length} de ${datos.productos.length} productos`} />
               <div className="filtros">
+                <select className="select" style={{ width: 180 }} value={semaforo} onChange={(e) => setSemaforo(e.target.value as TipoSemaforo | "")} aria-label="Inventario">
+                  <option value="">Todo el inventario</option>
+                  {(["rojo", "amarillo", "verde", "sin_movimiento"] as TipoSemaforo[]).map((s) => (
+                    <option key={s} value={s}>{ETIQUETA_SEMAFORO[s]} ({datos.inventario[s]})</option>
+                  ))}
+                </select>
                 <div style={{ position: "relative" }}>
                   <Search size={16} style={{ position: "absolute", left: 12, top: 13, color: "var(--faint)" }} aria-hidden="true" />
                   <input className="input" style={{ paddingLeft: 36 }} placeholder="Buscar producto…" value={busqueda}
@@ -234,6 +249,7 @@ export function Productos() {
               </table>
             </div>
           </Tarjeta>
+          </div>
         </>
       )}
       <AnimatePresence>{abierto && id && <DetalleProducto p={abierto} idEmpresa={id} cerrar={() => setAbierto(null)} />}</AnimatePresence>

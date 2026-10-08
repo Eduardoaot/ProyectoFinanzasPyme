@@ -4,6 +4,7 @@ Nada de tasas ni tarifas vive en la lógica: se actualizan agregando un año al 
 """
 
 import json
+import re
 import unicodedata
 from functools import lru_cache
 from pathlib import Path
@@ -32,12 +33,25 @@ def sin_acentos(texto: str) -> str:
     return "".join(c for c in base if unicodedata.category(c) != "Mn")
 
 
+def _litros(nombre: str) -> float | None:
+    """Litros que dice el nombre ("Agua 20 L" → 20); None si no trae presentación."""
+    hallado = re.search(r"(\d+(?:[.,]\d+)?)\s*(?:l|lt|lts|litros?)\b", nombre)
+    return float(hallado.group(1).replace(",", ".")) if hallado else None
+
+
 def tasa_iva_sugerida(categoria: str, nombre: str, anio: int) -> float:
-    """0 % para alimentos básicos (y agua natural); 16 % para lo demás. El usuario puede corregirla por producto."""
+    """0 % para alimentos (y agua en garrafón); 16 % para bebidas, agua chica y lo demás. El usuario puede corregirla por producto."""
     p = parametros(anio)["iva"]
     cat, nom = sin_acentos(categoria), sin_acentos(nombre)
-    if any(clave in nom for clave in p["nombres_tasa_cero"]):
+    if any(clave in nom for clave in p["excepciones_tasa_cero_por_nombre"]):
         return p["tasa_cero"]
+    litros = _litros(nom)
+    if "agua" in nom and litros is not None and litros >= p["agua_tasa_cero_litros_minimos"]:
+        return p["tasa_cero"]
+    if any(clave in nom for clave in p["excepciones_tasa_general_por_nombre"]):
+        return p["tasa_general"]
+    if cat in p["categorias_tasa_general"]:
+        return p["tasa_general"]
     if cat in p["categorias_tasa_cero"]:
         return p["tasa_cero"]
     return p["tasa_general"]

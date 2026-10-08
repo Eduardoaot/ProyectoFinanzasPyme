@@ -39,8 +39,8 @@ export function Flujo() {
   const mensual = (f?.mensual ?? []).map((m) => ({ ...m, salidas: m.compras + m.gastos }));
 
   return (
-    <Pagina eyebrow="Flujo de efectivo" titulo="¿Te va a alcanzar el efectivo?"
-      descripcion="Lo que entra contra lo que sale de tu caja, incluyendo compras de mercancía y gastos del negocio, y una proyección simple a 30 días.">
+    <Pagina titulo="Flujo de efectivo"
+      descripcion={f ? `Entradas por ventas y salidas por compras y gastos · ${f.periodo.etiqueta}.` : undefined}>
       {fl.error && <Aviso tipo="error">{fl.error}</Aviso>}
       {f ? (
         <div className="grid grid-kpi">
@@ -57,7 +57,7 @@ export function Flujo() {
 
       <Tarjeta retraso={0.05}>
         <TituloTarjeta icono={CalendarClock} titulo="Proyección a 30 días"
-          sub={proy ? `Desde el ${fechaLarga(proy.fecha_corte)}, si sigues al ritmo de los últimos 30 días` : "Calculando…"}
+          sub={proy ? `Desde tu último dato (${fechaLarga(proy.fecha_corte)}), al ritmo de los últimos 30 días. No cambia con el periodo elegido arriba.` : "Calculando…"}
           derecha={estado && <Semaforo estado={estado} texto={estado === "rojo" ? "No alcanza" : estado === "amarillo" ? "Viene justo" : "Alcanza"} />} />
         {proy ? (
           <div className="grid grid-proy">
@@ -73,7 +73,7 @@ export function Flujo() {
                     <ReferenceLine y={0} stroke="var(--bad)" strokeWidth={1} />
                     <ReferenceLine x={proy.fecha_corte} stroke="var(--axis)" label={{ value: "hoy", position: "insideTopRight", fill: "var(--muted)", fontSize: 11 }} />
                     <Tooltip content={<TooltipGrafica titulo={(l) => fechaCorta(String(l))} nombres={{ saldo: "Efectivo", proyectado: "Proyectado" }} />} />
-                    <Area dataKey="rango" stroke="none" fill={SERIE.ventas} fillOpacity={0.14} isAnimationActive={false} name="_rango" />
+                    <Area dataKey="rango" stroke="none" fill={SERIE.ventas} fillOpacity={0.14} isAnimationActive={false} name="Rango probable" />
                     <Line dataKey="saldo" stroke={SERIE.ventas} strokeWidth={2} dot={false} animationDuration={900} />
                     <Line dataKey="proyectado" stroke={SERIE.ventas} strokeWidth={2} strokeDasharray="6 4" dot={false} animationDuration={900} animationBegin={500} />
                   </ComposedChart>
@@ -123,7 +123,7 @@ export function Flujo() {
           </div>
         </Tarjeta>
         <Tarjeta retraso={0.14}>
-          <TituloTarjeta icono={Wallet} titulo="¿A dónde se fue tu efectivo?" sub="Salidas del periodo" />
+          <TituloTarjeta icono={Wallet} titulo="Salidas de efectivo por concepto" sub="Compras de mercancía y gastos del periodo" />
           {f && (
             <div className="pila" style={{ gap: 14 }}>
               {[

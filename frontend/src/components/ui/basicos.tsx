@@ -1,6 +1,6 @@
 import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, CheckCircle2, CircleHelp, Info, Minus, OctagonAlert, type LucideIcon } from "lucide-react";
-import { useEffect, useId, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { cambio } from "../../lib/formato";
 import type { Semaforo as TipoSemaforo } from "../../lib/tipos";
 
@@ -67,8 +67,14 @@ export function NumeroAnimado({ valor, formato, className }: { valor: number; fo
 /* ---------- Ayuda (término técnico en tooltip) ---------- */
 export function Ayuda({ texto }: { texto: string }) {
   const id = useId();
+  const [lado, setLado] = useState<"" | "izq" | "der">("");
+  // El globo mide hasta 260px: si el ícono está cerca de un borde, se alinea hacia adentro para que se lea completo.
+  const ubicar = (e: { currentTarget: HTMLElement }) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setLado(r.left < 150 ? "izq" : window.innerWidth - r.right < 150 ? "der" : "");
+  };
   return (
-    <span className="ayuda" tabIndex={0} aria-describedby={id}>
+    <span className={`ayuda ${lado}`} tabIndex={0} aria-describedby={id} onMouseEnter={ubicar} onFocus={ubicar}>
       <CircleHelp size={14} aria-hidden="true" />
       <span className="burbuja" role="tooltip" id={id}>
         {texto}
@@ -207,7 +213,7 @@ export function TituloTarjeta({ titulo, sub, icono: Icono, derecha }: { titulo: 
     <div className="card-titulo">
       <div>
         <h3>
-          {Icono && <Icono size={18} color="var(--celeste)" aria-hidden="true" />}
+          {Icono && <span className="icono-titulo" aria-hidden="true"><Icono size={16} strokeWidth={2} /></span>}
           {titulo}
         </h3>
         {sub && <p className="sub">{sub}</p>}

@@ -184,6 +184,16 @@ export interface Impuestos {
     elegible_resico: boolean;
     conviene: "resico" | "actividades_empresariales";
     actual: "resico" | "actividades_empresariales";
+    ingresos_anual: number;
+    deducciones_anual: number;
+    base_actividades: number;
+    tasa_efectiva_resico: number | null;
+    tasa_efectiva_actividades: number | null;
+    pct_deducciones: number | null;
+    /** Textos armados en el backend con las cifras ya calculadas; cambian según la situación. */
+    detalle_resico: string;
+    detalle_actividades: string;
+    conclusion: string;
     nota: string;
   } | null;
   ptu: { anual_estimada: number; provision_mensual: number; fecha: string } | null;

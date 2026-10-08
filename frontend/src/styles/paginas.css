@@ -127,6 +127,9 @@
 .medidor .marca { position: absolute; top: -8px; bottom: -8px; width: 2px; background: var(--ink); }
 .medidor .marca span { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: var(--fs-xs); font-weight: 650; }
 .medidor .marca.abajo span { top: auto; bottom: -22px; color: var(--celeste-strong); }
+.medidor .relleno.esperado { background: color-mix(in srgb, var(--celeste) 35%, transparent); }
+.medidor .marca.sin-linea { background: transparent; }
+.medidor .marca span { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; }
 
 /* ---------- Productos ---------- */
 .filtros { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }

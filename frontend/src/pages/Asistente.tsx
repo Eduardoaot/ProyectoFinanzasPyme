@@ -19,8 +19,8 @@ const CAPACIDADES = [
 export function Asistente() {
   const { enviar } = useChat();
   return (
-    <Pagina eyebrow="Asistente" titulo="Habla con Clara"
-      descripcion="Pregunta con tus palabras o con tu voz. Clara entiende el periodo (“en agosto”, “el mes pasado”, “este año”) y responde en voz alta.">
+    <Pagina titulo="Asistente Clara"
+      descripcion="Preguntas sobre ventas, gastos, productos o efectivo, por texto o por voz. Puedes indicar el periodo: “en agosto”, “el mes pasado”, “este año”.">
       <div className="grid grid-lateral">
         <motion.div className="card" style={{ padding: 0, height: "min(760px, calc(100dvh - 210px))", minHeight: 520, overflow: "hidden" }}
           initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>

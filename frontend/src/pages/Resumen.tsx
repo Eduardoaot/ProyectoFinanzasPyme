@@ -127,8 +127,8 @@ export function Resumen() {
     valor === null || valor === undefined ? undefined : `vs ${formato(valor)} en ${ant}`;
 
   return (
-    <Pagina titulo="Resumen de tu negocio"
-      descripcion={`Tu negocio en números. Comparando ${r?.periodo.etiqueta ?? "este periodo"} con ${ant}.`}
+    <Pagina titulo="Resumen"
+      descripcion={r ? `${r.periodo.etiqueta} · comparado con ${ant}` : undefined}
       acciones={
         <button className="btn" onClick={() => {
           abrirChat();

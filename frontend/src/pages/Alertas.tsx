@@ -45,7 +45,7 @@ function PanelUmbrales({ alGuardar }: { alGuardar: () => void }) {
 
   return (
     <Tarjeta retraso={0.1}>
-      <TituloTarjeta icono={SlidersHorizontal} titulo="¿Cuándo quieres que te avise?" sub="Ajusta los umbrales a tu tipo de negocio" />
+      <TituloTarjeta icono={SlidersHorizontal} titulo="Umbrales de las alertas" sub="Valores a partir de los cuales se genera cada aviso" />
       <div className="pila" style={{ gap: 16 }}>
         {CONTROLES.map((c) => {
           const v = valores[c.clave];
@@ -105,8 +105,8 @@ export function Alertas() {
   const conteo = (n: NivelAlerta) => base.datos?.filter((a) => a.nivel === n).length ?? 0;
 
   return (
-    <Pagina eyebrow="Alertas" titulo="Lo que necesita tu atención"
-      descripcion={`Avisos de ${seleccion?.etiqueta.toLowerCase() ?? "este periodo"}. El sistema detecta cada alerta y calcula sus cifras; la IA local solo la redacta en palabras sencillas.`}
+    <Pagina titulo="Alertas"
+      descripcion={`Avisos de ${seleccion?.etiqueta.toLowerCase() ?? "este periodo"}, ordenados por urgencia. Las cifras las calcula el sistema; la IA solo redacta el texto.`}
       acciones={
         <AnimatePresence mode="wait">
           {redactando ? (

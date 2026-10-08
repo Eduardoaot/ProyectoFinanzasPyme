@@ -452,8 +452,8 @@ export function Importar() {
   const [vista, setVista] = useState<"tutorial" | "subir">(empresa?.tiene_datos ? "subir" : "tutorial");
   const [version, setVersion] = useState(0);
   return (
-    <Pagina eyebrow="Importar datos" titulo="Sube tus Excel"
-      descripcion="Convierte tus hojas de ventas, productos, compras y gastos en información clara. Si es tu primera vez, empieza por el tutorial."
+    <Pagina titulo="Importar datos"
+      descripcion="Carga ventas, productos, compras y gastos desde archivos Excel (.xlsx) o CSV. Si es tu primera vez, revisa el tutorial."
       acciones={<Segmentado etiqueta="Vista" valor={vista} onChange={setVista} opciones={[{ valor: "tutorial", texto: "Tutorial" }, { valor: "subir", texto: "Subir archivo" }]} />}>
       {empresa && !empresa.tiene_datos && vista === "tutorial" && (
         <Aviso>Bienvenido a {empresa.nombre_negocio}. Tu panel está vacío: sigue estos pasos para cargar tus primeros datos.</Aviso>

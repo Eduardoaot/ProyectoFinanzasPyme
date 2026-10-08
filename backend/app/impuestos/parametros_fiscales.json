@@ -4,9 +4,26 @@
     "iva": {
       "tasa_general": 0.16,
       "tasa_cero": 0.0,
+      "tasa_frontera": 0.08,
       "limite_pago_efectivo": 2000.0,
-      "categorias_tasa_cero": ["basicos", "frutas y verduras", "lacteos", "panaderia", "abarrotes", "salchichoneria", "carnes", "tortilleria"],
-      "nombres_tasa_cero": ["agua ciel", "agua natural", "agua 1 l", "garrafon"]
+      "combustible_efectivo_deducible": false,
+      "categorias_tasa_cero": [
+        "basicos", "abarrotes", "frutas y verduras", "lacteos", "panaderia", "salchichoneria",
+        "carnes", "tortilleria", "granos y semillas", "huevo",
+        "enlatados", "botanas y dulces", "medicamentos de patente"
+      ],
+      "categorias_tasa_general": [
+        "bebidas", "refrescos", "jugos", "cerveza y licores", "cigarros",
+        "limpieza", "higiene personal", "papeleria", "ropa",
+        "alimento para mascotas", "comida preparada", "suplementos"
+      ],
+      "agua_tasa_cero_litros_minimos": 10,
+      "excepciones_tasa_general_por_nombre": [
+        "agua ciel", "agua 600", "agua 1 l", "agua 1.5", "jugo", "refresco",
+        "croquetas", "cafe preparado", "torta"
+      ],
+      "excepciones_tasa_cero_por_nombre": ["garrafon", "leche"],
+      "nota": "La tasa_iva por producto tiene prioridad. Categoría y nombres solo proponen un valor inicial. Orden: excepciones a tasa 0, agua >= litros mínimos, excepciones a tasa general, categorías. Se compara en minúsculas y sin acentos."
     },
     "resico": {
       "tabla_mensual": [

@@ -26,9 +26,14 @@ def test_iva_sugerido_por_categoria():
     assert tasa_iva_sugerida("Básicos", "Frijol negro", 2026) == 0.0
     assert tasa_iva_sugerida("Frutas y verduras", "Jitomate", 2026) == 0.0
     assert tasa_iva_sugerida("Bebidas", "Coca-Cola 2 L", 2026) == 0.16
-    assert tasa_iva_sugerida("Bebidas", "Agua Ciel 1 L", 2026) == 0.0
+    assert tasa_iva_sugerida("Bebidas", "Agua Ciel 1 L", 2026) == 0.16
+    assert tasa_iva_sugerida("Bebidas", "Agua Ciel garrafón 20 L", 2026) == 0.0
+    assert tasa_iva_sugerida("Bebidas", "Agua purificada 20 L", 2026) == 0.0
+    assert tasa_iva_sugerida("Lácteos", "Leche Lala 1 L", 2026) == 0.0
+    assert tasa_iva_sugerida("Abarrotes", "Atún Dolores", 2026) == 0.0
+    assert tasa_iva_sugerida("Abarrotes", "Jugo Del Valle 1 L", 2026) == 0.16
     assert tasa_iva_sugerida("Cuadernos", "Cuaderno profesional", 2026) == 0.16
-    assert tasa_iva_sugerida("Botanas y dulces", "Sabritas", 2026) == 0.16
+    assert tasa_iva_sugerida("Botanas y dulces", "Sabritas", 2026) == 0.0
 
 
 # --- IVA ---------------------------------------------------------------------------------------
@@ -196,6 +201,32 @@ def test_boutique_actividades_empresariales_deduce_compras(conn):
     assert sum(x["deducciones"] for x in r["meses"]) > 0
     resico = r["comparador_regimen"]["resico_anual"]
     assert resico > r["comparador_regimen"]["actividades_empresariales_anual"]      # la compra fuerte de temporada baja el ISR en 612
+    assert "Actividades Empresariales te cuesta" in r["comparador_regimen"]["conclusion"]
+
+
+def _comparar(**kw):
+    base = dict(ingresos_anual=300_000.0, deducciones_anual=100_000.0, resico_anual=3_000.0, ae_anual=20_000.0,
+                limite_resico=3_500_000.0, actual="resico", meses_con_datos=9)
+    return srv._comparar_regimen(**{**base, **kw})
+
+
+def test_comparador_explica_segun_la_situacion():
+    c = _comparar()
+    assert c["conviene"] == "resico" and c["ahorro"] == 17_000.0
+    assert c["base_actividades"] == 200_000.0 and c["pct_deducciones"] == pytest.approx(1 / 3)
+    assert "RESICO te cuesta $17,000 menos" in c["conclusion"] and "ya es el más barato" in c["conclusion"]
+    assert "1.0% de tus ingresos" in c["detalle_resico"]
+
+    c = _comparar(deducciones_anual=290_000.0, ae_anual=1_000.0)               # deduce casi todo: conviene cambiar
+    assert c["conviene"] == "actividades_empresariales"
+    assert "revísalo con tu contador" in c["conclusion"]
+
+    c = _comparar(ae_anual=3_400.0)                                            # diferencia chica: no compensa
+    assert "solo $400 " in c["conclusion"]
+
+    c = _comparar(ingresos_anual=4_000_000.0)                                  # fuera del límite de RESICO
+    assert not c["elegible_resico"] and c["conviene"] == "actividades_empresariales"
+    assert "superan el límite" in c["conclusion"]
 
 
 def test_dinero_perdido_por_gastos_sin_factura(conn):

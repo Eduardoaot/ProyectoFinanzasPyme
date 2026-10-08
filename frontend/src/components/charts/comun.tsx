@@ -33,7 +33,7 @@ export interface FilaTooltip {
 interface PropsTooltip {
   active?: boolean;
   label?: string | number;
-  payload?: { name?: string; value?: number; color?: string; dataKey?: string | number; payload?: Record<string, unknown> }[];
+  payload?: { name?: string; value?: number | number[]; color?: string; fill?: string; dataKey?: string | number; payload?: Record<string, unknown> }[];
   titulo?: (label: string | number | undefined, payload: Record<string, unknown> | undefined) => string;
   formato?: (v: number) => string;
   nombres?: Record<string, string>;
@@ -45,16 +45,23 @@ export function TooltipGrafica({ active, label, payload, titulo, formato = (v) =
     <div className="tooltip-grafica">
       <div className="t">{titulo ? titulo(label, payload[0]?.payload) : label}</div>
       {payload
-        .filter((p) => p.value !== undefined && p.value !== null && !String(p.dataKey).startsWith("_"))
-        .map((p) => (
-          <div className="r" key={String(p.dataKey)}>
-            <span className="m">
-              <i className="p" style={{ background: p.color }} />
-              {nombres[String(p.dataKey)] ?? p.name}
-            </span>
-            <strong className="num">{formato(Number(p.value))}</strong>
-          </div>
-        ))}
+        .filter((p) => p.value !== undefined && p.value !== null && !String(p.dataKey).startsWith("_") && !String(p.name ?? "").startsWith("_"))
+        .map((p) => {
+          // Las bandas (Area con [mínimo, máximo]) se muestran como rango "de $X a $Y".
+          const rango = Array.isArray(p.value) ? p.value : null;
+          if (rango && rango.some((v) => v === null || v === undefined || Number.isNaN(Number(v)))) return null;
+          return (
+            <div className="r" key={String(p.dataKey)}>
+              <span className="m">
+                <i className="p" style={{ background: rango ? (p.fill ?? p.color) : p.color, opacity: rango ? 0.45 : 1 }} />
+                {nombres[String(p.dataKey)] ?? p.name}
+              </span>
+              <strong className="num">
+                {rango ? `${formato(Math.min(...rango.map(Number)))} – ${formato(Math.max(...rango.map(Number)))}` : formato(Number(p.value))}
+              </strong>
+            </div>
+          );
+        })}
     </div>
   );
 }

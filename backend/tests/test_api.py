@@ -1,6 +1,9 @@
 """Pruebas de la API: aislamiento por empresa, caso base, alertas y chat."""
 
 import json
+from datetime import date
+
+import pytest
 
 PERIODO_CASO_BASE = {"desde": "2026-01-01", "hasta": "2026-09-30"}
 
@@ -79,7 +82,22 @@ def test_estado_de_resultados_cuadra(cliente, ana):
     er = {l["clave"]: l["monto"] for l in
           cliente.get("/api/empresas/1/finanzas", headers=ana, params=PERIODO_CASO_BASE).json()["estado_resultados"]}
     assert er["ventas"] - er["costo_ventas"] == er["utilidad_bruta"]
-    assert round(er["utilidad_bruta"] - er["gastos_fijos"] - er["gastos_variables"], 2) == er["utilidad"]
+    assert round(er["utilidad_bruta"] - er["gastos_fijos"] - er["gastos_variables"], 2) == er["utilidad_antes_impuestos"] == 65000.00
+    assert er["isr"] > 0                                                       # la papelería está en RESICO: paga ISR cada mes
+    assert round(er["utilidad_antes_impuestos"] - er["isr"] - er["iva"], 2) == er["utilidad"]
+
+
+def test_impuestos_del_estado_de_resultados_cuadran_con_el_apartado_de_impuestos(cliente, ana):
+    from app.db.session import get_engine
+    from app.impuestos import servicio as imp
+
+    er = {l["clave"]: l["monto"] for l in
+          cliente.get("/api/empresas/1/finanzas", headers=ana, params={"desde": "2026-07-01", "hasta": "2026-09-30"}).json()["estado_resultados"]}
+    with get_engine().connect() as conn:
+        meses = imp.calcular(conn, 1, date(2026, 9, 1))["meses"]
+    trimestre = [m for m in meses if m["periodo"] in ("2026-07", "2026-08", "2026-09")]
+    assert er["isr"] == pytest.approx(sum(m["isr"] for m in trimestre), abs=0.02)
+    assert er["iva"] == pytest.approx(sum(m["iva_a_pagar"] for m in trimestre), abs=0.02)
 
 
 def test_dataset_minimo_700_registros():

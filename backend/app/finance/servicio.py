@@ -180,6 +180,12 @@ def finanzas(conn: Connection, id_empresa: int, desde: date, hasta: date) -> Fin
     def pct(monto: float) -> float | None:
         return monto / k.ventas if k.ventas else None
 
+    # Impuestos del periodo con el mismo cálculo del apartado de Impuestos (ISR + IVA neto a pagar).
+    from app.impuestos.servicio import impuestos_del_periodo
+
+    imp = impuestos_del_periodo(conn, id_empresa, desde, hasta)
+    neta = round(k.utilidad - imp["total"], 2)
+    regimen = f" ({imp['regimen_nombre']})" if imp["regimen_nombre"] else ""
     estado = [
         LineaEstado(clave="ventas", etiqueta="Lo que vendiste", termino_tecnico="Ventas netas",
                     monto=k.ventas, porcentaje=pct(k.ventas), nivel="ingreso"),
@@ -195,10 +201,13 @@ def finanzas(conn: Connection, id_empresa: int, desde: date, hasta: date) -> Fin
         LineaEstado(clave="utilidad_antes_impuestos", etiqueta="Lo que ganaste antes de impuestos",
                     termino_tecnico="Utilidad antes de impuestos",
                     monto=k.utilidad, porcentaje=pct(k.utilidad), nivel="subtotal"),
-        LineaEstado(clave="impuestos", etiqueta="Impuestos", termino_tecnico="ISR / IVA",
-                    monto=0.0, porcentaje=None, nivel="info", nota="No calculado (próxima fase)"),
-        LineaEstado(clave="utilidad", etiqueta="Lo que ganaste", termino_tecnico="Utilidad neta",
-                    monto=k.utilidad, porcentaje=pct(k.utilidad), nivel="total"),
+        LineaEstado(clave="isr", etiqueta="ISR estimado", termino_tecnico=f"Impuesto sobre la renta de los meses del periodo{regimen}",
+                    monto=imp["isr"], porcentaje=pct(imp["isr"]), nivel="resta"),
+        LineaEstado(clave="iva", etiqueta="IVA a pagar al SAT",
+                    termino_tecnico="Tus precios incluyen IVA: es el IVA cobrado menos el IVA de tus compras y gastos con factura",
+                    monto=imp["iva"], porcentaje=pct(imp["iva"]), nivel="resta"),
+        LineaEstado(clave="utilidad", etiqueta="Lo que ganaste después de impuestos", termino_tecnico="Utilidad neta (estimada)",
+                    monto=neta, porcentaje=pct(neta), nivel="total"),
     ]
 
     mensual = serie(conn, id_empresa, desde, hasta, "mes")

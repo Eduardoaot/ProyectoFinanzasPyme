@@ -95,6 +95,59 @@ def _evaluar_gasto(g: dict, regimen: str, p: dict) -> dict:
             "base_deducible": base * c.porcentaje if g["uso"] != "personal" else 0.0}
 
 
+DIFERENCIA_MENOR_REGIMEN = 1000.0   # por debajo de esto, cambiar de régimen casi no se nota
+
+
+def _comparar_regimen(*, ingresos_anual: float, deducciones_anual: float, resico_anual: float, ae_anual: float,
+                      limite_resico: float, actual: str, meses_con_datos: int) -> dict:
+    """Compara el ISR anual de RESICO y de Actividades Empresariales y explica el resultado con las cifras calculadas.
+
+    El texto cambia según la situación: no elegible para RESICO, régimen actual ya es el más barato,
+    conviene cambiar, o la diferencia es tan pequeña que no compensa el trámite.
+    """
+    from app.finance.formato import dinero, pct
+
+    elegible = ingresos_anual <= limite_resico
+    base_ae = max(0.0, ingresos_anual - deducciones_anual)
+    tasa_resico = resico_anual / ingresos_anual if ingresos_anual else None
+    tasa_ae = ae_anual / ingresos_anual if ingresos_anual else None
+    pct_deducciones = deducciones_anual / ingresos_anual if ingresos_anual else None
+    conviene = ("resico" if resico_anual <= ae_anual else "actividades_empresariales") if elegible else "actividades_empresariales"
+    ahorro = abs(resico_anual - ae_anual)
+
+    detalle_resico = (f"Pagas {pct(tasa_resico)} de tus ingresos ({dinero(ingresos_anual)} al año). Tus gastos no se descuentan."
+                      if tasa_resico is not None else "Sin ingresos en el año.")
+    detalle_ae = (f"Descuentas {dinero(deducciones_anual)} de compras y gastos ({pct(pct_deducciones, 0)} de tus ingresos) "
+                  f"y pagas sobre {dinero(base_ae)} de ganancia: {pct(tasa_ae)} de tus ingresos."
+                  if pct_deducciones is not None else "Sin ingresos en el año.")
+
+    if not elegible:
+        conclusion = (f"Tus ingresos estimados del año ({dinero(ingresos_anual)}) superan el límite de {dinero(limite_resico)} de RESICO. "
+                      "Solo puedes tributar en Actividades Empresariales.")
+    elif ahorro < DIFERENCIA_MENOR_REGIMEN:
+        conclusion = (f"La diferencia es de solo {dinero(ahorro)} al año. Cambiar de régimen implica más trámites "
+                      "(contabilidad y facturas de cada gasto), así que probablemente no compense.")
+    elif conviene == "resico":
+        conclusion = (f"RESICO te cuesta {dinero(ahorro)} menos al año: tus gastos deducibles ({pct(pct_deducciones, 0)} de tus ingresos) "
+                      "no son suficientes para que deducir te convenga más que la tasa baja de RESICO.")
+    else:
+        conclusion = (f"Actividades Empresariales te cuesta {dinero(ahorro)} menos al año: tus compras y gastos con factura "
+                      f"({pct(pct_deducciones, 0)} de tus ingresos) bajan mucho la ganancia sobre la que pagas.")
+    if elegible and conviene != actual and ahorro >= DIFERENCIA_MENOR_REGIMEN:
+        conclusion += " Cambiar de régimen tiene fechas y requisitos: revísalo con tu contador antes de decidir."
+    elif conviene == actual:
+        conclusion += " Tu régimen actual ya es el más barato."
+
+    return {
+        "resico_anual": f.r2(resico_anual), "actividades_empresariales_anual": f.r2(ae_anual), "ahorro": f.r2(ahorro),
+        "elegible_resico": elegible, "conviene": conviene, "actual": actual,
+        "ingresos_anual": f.r2(ingresos_anual), "deducciones_anual": f.r2(deducciones_anual), "base_actividades": f.r2(base_ae),
+        "tasa_efectiva_resico": tasa_resico, "tasa_efectiva_actividades": tasa_ae, "pct_deducciones": pct_deducciones,
+        "detalle_resico": detalle_resico, "detalle_actividades": detalle_ae, "conclusion": conclusion,
+        "nota": f"Estimado anual a partir de {meses_con_datos} {'mes' if meses_con_datos == 1 else 'meses'} con datos del año.",
+    }
+
+
 def calcular(conn: Connection, id_empresa: int, mes_ref: date | None = None) -> dict:
     corte = q.rango_datos(conn, id_empresa)[1]
     if corte is None:
@@ -167,14 +220,10 @@ def calcular(conn: Connection, id_empresa: int, mes_ref: date | None = None) -> 
     if cfg["tipo_persona"] == "fisica":
         resico_anual = sum(f.isr_resico(x["ingresos"], p["resico"]["tabla_mensual"])["isr_causado"] for x in meses) * anualiza
         ae_anual = f.isr_tarifa(max(0.0, ingresos_ytd * anualiza - ded_anual), p["tarifa_art_96_mensual"], 12)
-        elegible = ingresos_ytd * anualiza <= p["resico"]["limite_anual"]
-        comparador = {
-            "resico_anual": f.r2(resico_anual), "actividades_empresariales_anual": f.r2(ae_anual),
-            "ahorro": f.r2(abs(resico_anual - ae_anual)), "elegible_resico": elegible,
-            "conviene": ("resico" if resico_anual <= ae_anual else "actividades_empresariales") if elegible else "actividades_empresariales",
-            "actual": "resico" if regimen == "626" else "actividades_empresariales",
-            "nota": "Anualizado con tus meses del año. En RESICO los gastos no se deducen para ISR; en Actividades Empresariales sí.",
-        }
+        comparador = _comparar_regimen(
+            ingresos_anual=ingresos_ytd * anualiza, deducciones_anual=ded_anual, resico_anual=resico_anual, ae_anual=ae_anual,
+            limite_resico=p["resico"]["limite_anual"], actual="resico" if regimen == "626" else "actividades_empresariales", meses_con_datos=mes_n,
+        )
 
     ptu_mensual = None
     if cfg["tiene_trabajadores"]:
@@ -220,6 +269,37 @@ def calcular(conn: Connection, id_empresa: int, mes_ref: date | None = None) -> 
         "mensaje_resico": ("En RESICO los gastos NO se deducen para ISR, pero sí sirven para acreditar IVA." if regimen == "626" else None),
         "aviso_legal": DISCLAIMER,
     }
+
+
+def impuestos_del_periodo(conn: Connection, id_empresa: int, desde: date, hasta: date) -> dict:
+    """ISR e IVA neto a pagar de los meses del periodo, con el mismo cálculo del apartado de Impuestos.
+
+    Toma cada mes cuyo día 1 cae en el periodo (hasta el último dato). Por año se hace un solo cálculo
+    hasta el último mes pedido, porque el ISR de Actividades Empresariales es acumulado.
+    """
+    corte = q.rango_datos(conn, id_empresa)[1]
+    vacio = {"isr": 0.0, "iva": 0.0, "total": 0.0, "meses": 0, "regimen_nombre": None}
+    if corte is None:
+        return vacio
+    hasta = min(hasta, corte)
+    meses_pedidos: dict[int, list[int]] = defaultdict(list)
+    m = desde.replace(day=1) if desde.day == 1 else sumar_meses(desde.replace(day=1), 1)
+    while m <= hasta:
+        meses_pedidos[m.year].append(m.month)
+        m = sumar_meses(m, 1)
+    isr = iva = 0.0
+    regimen_nombre = None
+    for anio, lista in meses_pedidos.items():
+        r = calcular(conn, id_empresa, date(anio, max(lista), 1))
+        if not r.get("tiene_datos", True) or "meses" not in r:
+            continue
+        regimen_nombre = r["configuracion"]["regimen_nombre"]
+        for x in r["meses"]:
+            if int(x["periodo"][5:7]) in lista:
+                isr += x["isr"]
+                iva += x["iva_a_pagar"]
+    total = sum(len(v) for v in meses_pedidos.values())
+    return {"isr": f.r2(isr), "iva": f.r2(iva), "total": f.r2(isr + iva), "meses": total, "regimen_nombre": regimen_nombre}
 
 
 def gastos_clasificados(conn: Connection, id_empresa: int, mes_ref: date | None = None, limite: int = 200) -> list[dict]:

@@ -17,17 +17,17 @@ import { useSesion } from "../../context/Sesion";
 import { Logo } from "../ui/basicos";
 
 export const MODULOS: { ruta: string; texto: string; icono: LucideIcon; pregunta: string }[] = [
-  { ruta: "/", texto: "Resumen", icono: LayoutDashboard, pregunta: "¿Cómo voy?" },
-  { ruta: "/finanzas", texto: "Finanzas", icono: ChartColumnBig, pregunta: "¿Estoy ganando?" },
-  { ruta: "/productos", texto: "Productos", icono: Package, pregunta: "¿Qué producto me deja más?" },
-  { ruta: "/flujo", texto: "Flujo de efectivo", icono: Wallet, pregunta: "¿Me va a alcanzar?" },
-  { ruta: "/alertas", texto: "Alertas", icono: Bell, pregunta: "¿Qué atiendo primero?" },
+  { ruta: "/", texto: "Resumen", icono: LayoutDashboard, pregunta: "Ventas, ganancia y margen" },
+  { ruta: "/finanzas", texto: "Finanzas", icono: ChartColumnBig, pregunta: "Estado de resultados y gastos" },
+  { ruta: "/productos", texto: "Productos", icono: Package, pregunta: "Ganancia e inventario" },
+  { ruta: "/flujo", texto: "Flujo de efectivo", icono: Wallet, pregunta: "Entradas y salidas de caja" },
+  { ruta: "/alertas", texto: "Alertas", icono: Bell, pregunta: "Avisos por urgencia" },
 ];
 
 export const PLANEACION: { ruta: string; texto: string; icono: LucideIcon; pregunta: string }[] = [
-  { ruta: "/proyecciones", texto: "Proyecciones y consejos", icono: TrendingUp, pregunta: "¿Cómo me va a ir? ¿Qué hago?" },
-  { ruta: "/impuestos", texto: "Impuestos", icono: Landmark, pregunta: "¿Cuánto debo pagar al SAT?" },
-  { ruta: "/deudas", texto: "Deudas", icono: CreditCard, pregunta: "¿Cuánto debo y cuándo termino?" },
+  { ruta: "/proyecciones", texto: "Proyecciones y consejos", icono: TrendingUp, pregunta: "Pronóstico, compras y ahorro" },
+  { ruta: "/impuestos", texto: "Impuestos", icono: Landmark, pregunta: "ISR, IVA y deducciones" },
+  { ruta: "/deudas", texto: "Deudas", icono: CreditCard, pregunta: "Saldos, pagos y plan" },
 ];
 
 export const HERRAMIENTAS = [

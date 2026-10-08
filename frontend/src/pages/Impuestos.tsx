@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CalendarDays, ChartColumnBig, CircleCheck, CircleX, Landmark, Scale, Settings2, TriangleAlert } from "lucide-react";
+import { CalendarDays, ChartColumnBig, CircleCheck, CircleX, Landmark, ReceiptText, Scale, Settings2, TriangleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { EJE, Leyenda, SERIE, TooltipGrafica } from "../components/charts/comun";
@@ -121,7 +121,7 @@ function Deducciones({ idEmpresa, mes, editable, version, alCambiar }: { idEmpre
   const lista = gastos.datos ?? [];
   return (
     <Tarjeta retraso={0.2}>
-      <TituloTarjeta icono={CircleCheck} titulo="¿Esto se puede deducir?" sub="Cada gasto del mes con su factura, su forma de pago y el motivo" />
+      <TituloTarjeta icono={ReceiptText} titulo="Gastos deducibles del mes" sub="Cada gasto con su factura, su forma de pago y por qué se deduce o no. Corrige la factura o la forma de pago aquí mismo." />
       {error && <Aviso tipo="error">{error}</Aviso>}
       {!gastos.datos ? <TarjetaCargando alto={200} /> : lista.length === 0 ? <p className="muted">Este mes no hay gastos registrados.</p> : (
         <div className="tabla-envoltura">
@@ -178,7 +178,7 @@ export function Impuestos() {
 
   if (!listo) {
     return (
-      <Pagina eyebrow="Impuestos" titulo="¿Cuánto debes pagar al SAT?">
+      <Pagina titulo="Impuestos">
         <EstadoVacio icono={Landmark} titulo="Aún no hay datos para calcular" texto="Sube tus ventas, compras y gastos para estimar tus impuestos del mes." />
       </Pagina>
     );
@@ -188,8 +188,8 @@ export function Impuestos() {
   const barras = (d?.meses ?? []).map((m) => ({ etiqueta: m.etiqueta.split(" ")[0].slice(0, 3), isr: m.isr, iva: m.iva_a_pagar, favor: m.saldo_a_favor }));
   const perdido = d?.perdido_por_no_deducir;
   return (
-    <Pagina eyebrow="Impuestos" titulo="¿Cuánto debes pagar al SAT este mes?"
-      descripcion="Calculamos tu ISR y tu IVA con tus ventas cobradas, tus compras y tus gastos. Es una estimación para que apartes el dinero a tiempo."
+    <Pagina titulo="Impuestos"
+      descripcion={d ? `ISR e IVA estimados de ${d.mes_etiqueta.toLowerCase()} · ${d.configuracion.regimen_nombre}. Elige otro mes a la derecha.` : undefined}
       acciones={d && (
         <div className="fila">
           <label className="sr-only" htmlFor="mes-impuestos">Mes</label>
@@ -270,25 +270,22 @@ export function Impuestos() {
 
       {d?.comparador_regimen && (
         <Tarjeta retraso={0.14}>
-          <TituloTarjeta icono={Scale} titulo="¿Te conviene RESICO o Actividades Empresariales?" sub="ISR anual estimado con tus datos reales del año" />
+          <TituloTarjeta icono={Scale} titulo="Comparación de régimen: RESICO y Actividades Empresariales"
+            sub={`ISR anual estimado en cada régimen con tus ingresos (${dinero(d.comparador_regimen.ingresos_anual, false)}) y tus deducciones reales`} />
           <div className="grid grid-2">
             {([
-              ["resico", "RESICO", d.comparador_regimen.resico_anual, "No deduce gastos, pero la tasa es de 1% a 2.5% de tus ingresos."],
-              ["actividades_empresariales", "Actividades Empresariales", d.comparador_regimen.actividades_empresariales_anual, "Deduces tus compras y gastos, y pagas según la tarifa progresiva."],
-            ] as const).map(([clave, nombre, monto, nota]) => (
+              ["resico", "RESICO", d.comparador_regimen.resico_anual, d.comparador_regimen.detalle_resico],
+              ["actividades_empresariales", "Actividades Empresariales", d.comparador_regimen.actividades_empresariales_anual, d.comparador_regimen.detalle_actividades],
+            ] as const).map(([clave, nombre, monto, detalle]) => (
               <div key={clave} className="mini-kpi" style={{ outline: d.comparador_regimen?.conviene === clave ? "2px solid var(--ok)" : undefined }}>
-                <div className="k">{nombre} {d.comparador_regimen?.actual === clave && <span className="chip">tu régimen</span>} {d.comparador_regimen?.conviene === clave && <span className="chip ok">te conviene</span>}</div>
+                <div className="k">{nombre} {d.comparador_regimen?.actual === clave && <span className="chip">tu régimen</span>} {d.comparador_regimen?.conviene === clave && <span className="chip ok">más barato</span>}</div>
                 <div className="v num">{dinero(monto, false)} <span className="mini muted">al año</span></div>
-                <div className="mini muted">{nota}</div>
+                <div className="mini muted justificado">{detalle}</div>
               </div>
             ))}
           </div>
-          <p className="mini muted justificado">
-            {d.comparador_regimen.conviene === d.comparador_regimen.actual
-              ? `Con tus datos, tu régimen actual es el más barato (diferencia de ${dinero(d.comparador_regimen.ahorro, false)} al año).`
-              : `Con tus datos, cambiar te ahorraría unos ${dinero(d.comparador_regimen.ahorro, false)} al año. Platícalo con tu contador antes de decidir.`}
-            {!d.comparador_regimen.elegible_resico && " Tus ingresos anualizados superan el límite para estar en RESICO."} {d.comparador_regimen.nota}
-          </p>
+          <Aviso>{d.comparador_regimen.conclusion}</Aviso>
+          <p className="mini muted">{d.comparador_regimen.nota}</p>
         </Tarjeta>
       )}
 

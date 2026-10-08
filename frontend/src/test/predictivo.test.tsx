@@ -42,9 +42,11 @@ describe("Proyecciones", () => {
     render(<MemoryRouter><Proyecciones /></MemoryRouter>);
     expect(await screen.findByText("Días de colchón")).toBeInTheDocument();
     expect(screen.getByText("Precisión aproximada")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "¿Cuánto debo comprar?" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "¿Qué hago con lo que gano?" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "¿Qué pasa si…?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Punto de equilibrio del mes" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Horizonte de las gráficas" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Compras sugeridas de inventario" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Reparto sugerido de la utilidad" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Simulador de escenarios" })).toBeInTheDocument();
     expect(await screen.findByText("Resumen de prueba de Clara.")).toBeInTheDocument();
   });
 
@@ -63,14 +65,15 @@ describe("Impuestos", () => {
     expect(await screen.findByText("Pagas al SAT")).toBeInTheDocument();
     expect(screen.getAllByText(/No sustituye la declaración ni la asesoría de un contador/).length).toBeGreaterThan(0);
     expect(screen.getByText(/En RESICO los gastos NO se deducen para ISR/)).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "¿Esto se puede deducir?" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Gastos deducibles del mes" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Calendario fiscal" })).toBeInTheDocument();
   });
 
   it("en Actividades Empresariales compara los dos regímenes", async () => {
     const { Impuestos } = await import("../pages/Impuestos");
     render(<MemoryRouter><Impuestos /></MemoryRouter>);
-    expect(await screen.findByRole("heading", { name: /RESICO o Actividades Empresariales/ })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /Comparación de régimen/ })).toBeInTheDocument();
+    expect(screen.getByText(/Actividades Empresariales te cuesta/)).toBeInTheDocument();
   });
 });
 
@@ -81,7 +84,7 @@ describe("Deudas", () => {
     expect(await screen.findByRole("heading", { name: "Tarjeta Santander Negocios" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Préstamo de financiera rápida" })).toBeInTheDocument();
     expect(screen.getByText("Tu utilidad no alcanza para tus deudas")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "¿Cuál deuda pago primero?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Orden de pago recomendado" })).toBeInTheDocument();
     const tarjeta = screen.getByRole("heading", { name: "Tarjeta Santander Negocios" }).closest("article") as HTMLElement;
     expect(within(tarjeta).getByText(/Usas 88% de tu límite/)).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole("button", { name: /Agregar deuda/ })).toBeEnabled());

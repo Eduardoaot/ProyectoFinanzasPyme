@@ -38,8 +38,8 @@ export function Finanzas() {
   const maxMedidor = pe && pe.punto_equilibrio_mensual ? Math.max(pe.punto_equilibrio_mensual, pe.ventas_mensuales_promedio) * 1.15 : 1;
 
   return (
-    <Pagina eyebrow="Finanzas" titulo="¿Estás ganando?"
-      descripcion="Tu estado de resultados en palabras sencillas: lo que vendiste, lo que te costó y lo que te quedó. Pasa el cursor sobre ⓘ para ver el término contable.">
+    <Pagina titulo="Finanzas"
+      descripcion={f ? `Ventas, costos, gastos y utilidad · ${f.periodo.etiqueta}.` : undefined}>
       {fz.error && <Aviso tipo="error">{fz.error}</Aviso>}
       <div className="grid grid-2">
         {f ? (
@@ -108,7 +108,7 @@ export function Finanzas() {
 
           {f ? (
             <Tarjeta retraso={0.1}>
-              <TituloTarjeta icono={IconoPie} titulo="¿En qué se va tu dinero?" sub="Gastos de operación por categoría" />
+              <TituloTarjeta icono={IconoPie} titulo="Distribución de gastos" sub="Gastos de operación por categoría" />
               {gastos.length === 0 ? (
                 <p className="muted pequeno">Sin gastos en este periodo.</p>
               ) : (
