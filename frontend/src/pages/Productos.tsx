@@ -149,7 +149,7 @@ export function Productos() {
                     <XAxis type="number" {...EJE} tickFormatter={dineroCompacto} />
                     <YAxis type="category" dataKey="nombre" {...EJE} width={150} tick={{ fill: "var(--ink-2)", fontSize: 12 }} />
                     <Tooltip content={<TooltipGrafica nombres={{ utilidad: "Te dejó" }} titulo={(l) => String(l)} />} cursor={{ fill: "var(--surface-hover)" }} />
-                    <Bar dataKey="utilidad" fill={SERIE.utilidad} radius={[0, 4, 4, 0]} maxBarSize={22} animationDuration={900}
+                    <Bar dataKey="utilidad" fill={SERIE.utilidad} radius={[0, 4, 4, 0]} maxBarSize={22} animationDuration={900} activeBar={{ stroke: "none", fillOpacity: 0.85 }}
                       label={{ position: "right", formatter: (v: unknown) => dineroCompacto(Number(v)), fill: "var(--ink-2)", fontSize: 12 }} />
                   </BarChart>
                 </ResponsiveContainer>
