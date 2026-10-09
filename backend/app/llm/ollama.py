@@ -18,10 +18,12 @@ log = logging.getLogger(__name__)
 
 
 class ClienteOllama:
-    def __init__(self, url: str, modelo: str, timeout: float):
+    def __init__(self, url: str, modelo: str, timeout: float, keep_alive: str = "30m"):
         self.url = url.rstrip("/")
         self.modelo = modelo
         self.timeout = timeout
+        # Cargar el modelo en memoria tarda varios segundos: se mantiene cargado entre peticiones.
+        self.keep_alive = keep_alive
 
     def chat(self, sistema: str, usuario: str, *, formato_json: bool = False, temperatura: float = 0.3,
              max_tokens: int = 600) -> str | None:
@@ -29,6 +31,7 @@ class ClienteOllama:
             "model": self.modelo,
             "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": usuario}],
             "stream": False,
+            "keep_alive": self.keep_alive,
             "options": {"temperature": temperatura, "num_predict": max_tokens},
         }
         if formato_json:
@@ -48,6 +51,7 @@ class ClienteOllama:
             "model": self.modelo,
             "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": usuario}],
             "stream": True,
+            "keep_alive": self.keep_alive,
             "options": {"temperature": temperatura, "num_predict": max_tokens},
         }
         try:
@@ -78,4 +82,4 @@ class ClienteOllama:
 @lru_cache
 def get_llm() -> ClienteOllama:
     ajustes = get_settings()
-    return ClienteOllama(ajustes.ollama_url, ajustes.ollama_modelo, ajustes.ollama_timeout)
+    return ClienteOllama(ajustes.ollama_url, ajustes.ollama_modelo, ajustes.ollama_timeout, ajustes.ollama_keep_alive)

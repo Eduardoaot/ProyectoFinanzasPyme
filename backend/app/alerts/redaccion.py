@@ -5,10 +5,10 @@ por alerta. La guardia de cifras descarta cualquier oración con números invent
 si no queda nada útil, se conserva el texto de la plantilla.
 """
 
-import hashlib
 import json
 
 from app.alerts.reglas import Alerta
+from app.llm.cache import CacheLLM, clave
 from app.llm.guardia import cifras_permitidas, filtrar
 from app.llm.ollama import get_llm
 
@@ -21,36 +21,38 @@ REGLAS ESTRICTAS:
 - No recomiendes bancos, instituciones ni productos financieros concretos.
 Responde SOLO un JSON: {"alertas": [{"id": "...", "mensaje": "..."}]}"""
 
-_cache: dict[str, dict[str, str]] = {}
+_cache: CacheLLM[dict[str, str]] = CacheLLM()
 
 
 def _clave(alertas: list[Alerta]) -> str:
     contenido = json.dumps([(a.id, a.metricas) for a in alertas], sort_keys=True, ensure_ascii=False)
-    return hashlib.sha256(contenido.encode()).hexdigest()
+    return clave(SISTEMA, contenido)
+
+
+def _pedir_textos(alertas: list[Alerta]) -> dict[str, str] | None:
+    entrada = [{"id": a.id, "nivel": a.nivel, "titulo": a.titulo, "metricas": a.metricas, "texto_base": a.mensaje}
+               for a in alertas]
+    crudo = get_llm().chat(SISTEMA, json.dumps({"alertas": entrada}, ensure_ascii=False),
+                           formato_json=True, temperatura=0.3, max_tokens=900)
+    if crudo is None:
+        return None           # Ollama no respondió: no se guarda en caché, para reintentar
+    textos: dict[str, str] = {}
+    if crudo:
+        try:
+            for item in json.loads(crudo).get("alertas", []):
+                if isinstance(item, dict) and isinstance(item.get("mensaje"), str):
+                    textos[str(item.get("id"))] = item["mensaje"].strip()
+        except (json.JSONDecodeError, AttributeError):
+            textos = {}
+    return textos             # vacío = respuesta inútil; se guarda para no volver a esperar al modelo
 
 
 def redactar(alertas: list[Alerta]) -> list[Alerta]:
     if not alertas:
         return alertas
-    clave = _clave(alertas)
-    if clave not in _cache:
-        entrada = [{"id": a.id, "nivel": a.nivel, "titulo": a.titulo, "metricas": a.metricas, "texto_base": a.mensaje}
-                   for a in alertas]
-        crudo = get_llm().chat(SISTEMA, json.dumps({"alertas": entrada}, ensure_ascii=False),
-                               formato_json=True, temperatura=0.3, max_tokens=900)
-        textos: dict[str, str] = {}
-        if crudo:
-            try:
-                for item in json.loads(crudo).get("alertas", []):
-                    if isinstance(item, dict) and isinstance(item.get("mensaje"), str):
-                        textos[str(item.get("id"))] = item["mensaje"].strip()
-            except (json.JSONDecodeError, AttributeError):
-                textos = {}
-        if not textos:
-            return alertas          # sin IA: se quedan las plantillas (no se guarda en caché para reintentar)
-        _cache[clave] = textos
-
-    textos = _cache[clave]
+    textos = _cache.obtener(_clave(alertas), lambda: _pedir_textos(alertas))
+    if not textos:
+        return alertas          # sin IA: se quedan las plantillas
     resultado = []
     for a in alertas:
         texto = textos.get(a.id)

@@ -25,13 +25,16 @@ class LLMFalso:
     def __init__(self):
         self.respuesta: str | None = None
         self.llamadas = 0
+        self.ultimo_sistema = ""
 
     def chat(self, sistema, usuario, **_):
         self.llamadas += 1
+        self.ultimo_sistema = sistema
         return self.respuesta
 
     def chat_stream(self, sistema, usuario, **_):
         self.llamadas += 1
+        self.ultimo_sistema = sistema
         if self.respuesta:
             for palabra in self.respuesta.split(" "):
                 yield palabra + " "
@@ -56,6 +59,9 @@ def base_de_datos():
 
 @pytest.fixture
 def llm(monkeypatch):
+    from app.llm.cache import limpiar_todo
+
+    limpiar_todo()
     falso = LLMFalso()
     for modulo in ("app.llm.ollama", "app.chat.asistente", "app.chat.intenciones", "app.alerts.redaccion",
                    "app.ingestion.mapeo", "app.api.rutas_chat", "app.chat.apartados"):

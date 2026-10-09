@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     ollama_url: str = "http://127.0.0.1:11434"   # 127.0.0.1 evita ~2 s de resolución IPv6 en Windows
     ollama_modelo: str = "llama3.2:3b"
     ollama_timeout: float = 120.0
+    ollama_keep_alive: str = "30m"              # cuánto tiempo sigue cargado el modelo sin uso (Ollama trae 5m)
 
     cors_origenes: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
     max_archivo_mb: int = 5
