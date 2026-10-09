@@ -198,7 +198,7 @@ export function Productos() {
 
           <div ref={tablaRef} style={{ scrollMarginTop: 80 }}>
           <Tarjeta retraso={0.1} interactiva={false}>
-            <div className="fila-entre envolver">
+            <div className="fila-entre envolver salto-tabla" ref={tablaRef}>
               <TituloTarjeta icono={PackageSearch} titulo="Todos tus productos" sub={`${filtrados.length} de ${datos.productos.length} productos`} />
               <div className="filtros">
                 <select className="select" style={{ width: 180 }} value={semaforo} onChange={(e) => setSemaforo(e.target.value as TipoSemaforo | "")} aria-label="Inventario">

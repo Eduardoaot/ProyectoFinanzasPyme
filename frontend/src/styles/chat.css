@@ -9,6 +9,8 @@
 }
 .chat-cabecera .nombre { font-weight: 700; }
 .chat-cabecera .estado { font-size: var(--fs-xs); color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.chat-cabecera .btn-cerrar-chat { background: #fff; border-color: var(--line); color: var(--negro); }
+.chat-cabecera .btn-cerrar-chat:hover { background: var(--bad); border-color: var(--bad); color: #fff; }
 .punto-vivo { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 0 rgb(12 163 12 / 0.5); animation: latido 2s infinite; }
 .punto-vivo.apagado { background: var(--faint); animation: none; }
 @keyframes latido {

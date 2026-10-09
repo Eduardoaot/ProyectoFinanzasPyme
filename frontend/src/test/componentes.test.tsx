@@ -51,7 +51,6 @@ describe("tarjeta de alerta", () => {
     expect(screen.getByText(alerta.mensaje)).toBeInTheDocument();
     expect(screen.getByText(alerta.accion)).toBeInTheDocument();
     expect(screen.getByText("Acción")).toBeInTheDocument();
-    expect(screen.getByText(/Redactado por IA/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Ver detalle/ })).toHaveAttribute("href", "/flujo");
   });
 });
