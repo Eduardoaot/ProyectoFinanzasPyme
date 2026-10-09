@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, Sparkles, X } from "lucide-react";
+import { MessageCircle, Sparkles } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAlertas } from "../../context/Alertas";
@@ -70,13 +70,16 @@ export function AppLayout({ tema, alternarTema }: { tema: "light" | "dark"; alte
               </motion.div>
             )}
           </AnimatePresence>
-          <motion.button className="fab-chat" onClick={alternarChat} whileHover={{ y: -3 }} whileTap={{ scale: 0.95 }}
-            initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 22 }}
-            aria-expanded={chatAbierto} aria-label={chatAbierto ? "Cerrar chat" : "Abrir chat con Clara"}>
-            <span className="orbe">{chatAbierto ? <X size={16} /> : <Sparkles size={16} />}</span>
-            <span className="texto">{chatAbierto ? "Cerrar" : "Pregúntale a Clara"}</span>
-            {!chatAbierto && <MessageCircle size={16} style={{ opacity: 0.5 }} className="texto" />}
-          </motion.button>
+          {!chatAbierto && (
+            <motion.button className="fab-chat" onClick={alternarChat} whileHover={{ y: -3 }} whileTap={{ scale: 0.95 }}
+              initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+              transition={{ delay: 0.6, type: "spring", stiffness: 260, damping: 22 }}
+              aria-expanded={false} aria-label="Abrir chat con Clara">
+              <span className="orbe"><Sparkles size={16} /></span>
+              <span className="texto">Pregúntale a Clara</span>
+              <MessageCircle size={16} style={{ opacity: 0.5 }} className="texto" />
+            </motion.button>
+          )}
         </>
       )}
     </div>

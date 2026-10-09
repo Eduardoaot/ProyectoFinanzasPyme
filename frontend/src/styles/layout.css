@@ -137,7 +137,7 @@
 .panel-chat {
   position: fixed;
   right: 24px;
-  bottom: 92px;
+  bottom: 24px;
   width: min(440px, calc(100vw - 32px));
   height: min(680px, calc(100dvh - 120px));
   z-index: 60;
@@ -176,5 +176,5 @@
   .filtro-periodo .select { flex: 1 1 45%; min-width: 0; }
   .fab-chat { right: 16px; bottom: 16px; padding: 0 14px; }
   .fab-chat .texto { display: none; }
-  .panel-chat { right: 8px; left: 8px; width: auto; bottom: 84px; height: calc(100dvh - 100px); }
+  .panel-chat { right: 8px; left: 8px; width: auto; bottom: 16px; height: calc(100dvh - 32px); }
 }
