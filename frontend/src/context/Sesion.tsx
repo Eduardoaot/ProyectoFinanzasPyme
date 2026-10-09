@@ -6,11 +6,17 @@ interface ValorSesion {
   usuario: Usuario | null;
   empresas: EmpresaResumen[];
   empresa: InfoEmpresa | null;
+  /** Negocio elegido; se conoce antes de que terminen de cargar sus datos. */
+  idEmpresa: number | null;
   cargando: boolean;
   entrar: (sesion: Sesion) => void;
   salir: () => void;
+  /** Refleja en pantalla un cambio de nombre hecho desde el perfil. */
+  actualizarUsuario: (usuario: Usuario) => void;
   cambiarEmpresa: (id: number) => void;
   recargarEmpresa: () => Promise<void>;
+  /** Vuelve a pedir la lista de negocios (p. ej. después de que un dueño te invitó). */
+  recargarEmpresas: () => Promise<void>;
 }
 
 const Contexto = createContext<ValorSesion | null>(null);
@@ -62,6 +68,12 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       .finally(() => setCargando(false));
   }, [elegirEmpresa, salir]);
 
+  const recargarEmpresas = useCallback(async () => {
+    const r = await api.get<{ usuario: Usuario; empresas: EmpresaResumen[] }>("/auth/yo");
+    setEmpresas(r.empresas);
+    elegirEmpresa(r.empresas);
+  }, [elegirEmpresa]);
+
   const recargarEmpresa = useCallback(async () => {
     if (idEmpresa === null) return;
     setEmpresa(await api.get<InfoEmpresa>(`/empresas/${idEmpresa}`));
@@ -90,8 +102,8 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
   );
 
   const valor = useMemo(
-    () => ({ usuario, empresas, empresa, cargando, entrar, salir, cambiarEmpresa: setIdEmpresa, recargarEmpresa }),
-    [usuario, empresas, empresa, cargando, entrar, salir, recargarEmpresa],
+    () => ({ usuario, empresas, empresa, idEmpresa, cargando, entrar, salir, actualizarUsuario: setUsuario, cambiarEmpresa: setIdEmpresa, recargarEmpresa, recargarEmpresas }),
+    [usuario, empresas, empresa, idEmpresa, cargando, entrar, salir, recargarEmpresa, recargarEmpresas],
   );
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }

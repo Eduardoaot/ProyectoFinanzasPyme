@@ -10,7 +10,7 @@ const NIVEL = {
 } as const;
 
 const RUTA = {
-  resumen: "/", finanzas: "/finanzas", productos: "/productos", flujo: "/flujo",
+  resumen: "/resumen", finanzas: "/finanzas", productos: "/productos", flujo: "/flujo",
   proyecciones: "/proyecciones", impuestos: "/impuestos", deudas: "/deudas",
 } as const;
 

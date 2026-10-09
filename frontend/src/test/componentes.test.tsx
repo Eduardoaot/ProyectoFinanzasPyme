@@ -3,8 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { TarjetaAlerta } from "../components/AlertaTarjeta";
+import { MenuUsuario } from "../components/layout/MenuUsuario";
+import { SelectorEmpresa } from "../components/layout/SelectorEmpresa";
 import { Cambio, Segmentado, Semaforo } from "../components/ui/basicos";
-import type { Alerta } from "../lib/tipos";
+import type { Alerta, EmpresaResumen } from "../lib/tipos";
 
 describe("semáforo", () => {
   it("nunca depende solo del color: lleva texto", () => {
@@ -52,5 +54,46 @@ describe("tarjeta de alerta", () => {
     expect(screen.getByText(alerta.accion)).toBeInTheDocument();
     expect(screen.getByText("Acción")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Ver detalle/ })).toHaveAttribute("href", "/flujo");
+  });
+});
+
+describe("selector de negocio", () => {
+  const empresas: EmpresaResumen[] = [
+    { id_empresa: 1, nombre_negocio: "Papelería El Lápiz Feliz", giro: "Papelería", ciudad: "CDMX", rol: "consulta" },
+    { id_empresa: 2, nombre_negocio: "Boutique Brisa", giro: "Ropa y accesorios", ciudad: null, rol: "dueno" },
+  ];
+  it("con un solo negocio muestra el nombre, sin menú", () => {
+    render(<SelectorEmpresa empresas={[empresas[1]]} idActual={2} nombre="Boutique Brisa" onCambiar={vi.fn()} />);
+    expect(screen.getByText("Boutique Brisa")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByText("Solo puedes ver")).toBeNull();
+  });
+  it("con varios negocios abre un menú, marca el rol y cambia de negocio", async () => {
+    const onCambiar = vi.fn();
+    render(<SelectorEmpresa empresas={empresas} idActual={1} nombre="Papelería El Lápiz Feliz" onCambiar={onCambiar} />);
+    expect(screen.getByText("Solo puedes ver")).toBeInTheDocument();
+    const boton = screen.getByRole("button", { name: /Cambiar de negocio/ });
+    await userEvent.click(boton);
+    expect(boton).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(/Eres dueño/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /Boutique Brisa/ }));
+    expect(onCambiar).toHaveBeenCalledWith(2);
+  });
+});
+
+describe("menú de la cuenta", () => {
+  it("muestra nombre y correo, lleva al perfil y cierra sesión", async () => {
+    const onSalir = vi.fn();
+    render(
+      <MemoryRouter>
+        <MenuUsuario usuario={{ id_usuario: 1, nombre: "Ana Ruiz", email: "ana.ruiz@example.com" }} onSalir={onSalir} />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByText("ana.ruiz@example.com")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: /Tu cuenta: Ana Ruiz/ }));
+    expect(screen.getByText("ana.ruiz@example.com")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Mi perfil/ })).toHaveAttribute("href", "/perfil");
+    await userEvent.click(screen.getByRole("button", { name: /Cerrar sesión/ }));
+    expect(onSalir).toHaveBeenCalled();
   });
 });

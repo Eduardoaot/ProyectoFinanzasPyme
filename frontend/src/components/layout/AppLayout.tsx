@@ -1,13 +1,15 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, Sparkles } from "lucide-react";
-import { Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAlertas } from "../../context/Alertas";
 import { useChat } from "../../context/Chat";
 import { useSesion } from "../../context/Sesion";
-import { Conversacion } from "../chat/Conversacion";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
+
+// El chat (con su lector de Markdown) se descarga la primera vez que se abre, no al entrar a la app.
+const Conversacion = lazy(() => import("../chat/Conversacion").then((m) => ({ default: m.Conversacion })));
 
 export function AppLayout({ tema, alternarTema }: { tema: "light" | "dark"; alternarTema: () => void }) {
   const { empresa } = useSesion();
@@ -66,7 +68,9 @@ export function AppLayout({ tema, alternarTema }: { tema: "light" | "dark"; alte
               <motion.div className="panel-chat" role="dialog" aria-label="Chat con Clara"
                 initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.92, y: 16 }}
                 transition={{ type: "spring", stiffness: 320, damping: 30 }}>
-                <Conversacion compacto />
+                <Suspense fallback={null}>
+                  <Conversacion compacto />
+                </Suspense>
               </motion.div>
             )}
           </AnimatePresence>

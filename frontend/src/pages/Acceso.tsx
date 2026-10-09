@@ -90,6 +90,7 @@ export function Acceso() {
   const [modo, setModo] = useState<"entrar" | "registro">("entrar");
   const [cargando, setCargando] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [esContador, setEsContador] = useState(false);
   const [form, setForm] = useState({ nombre: "", email: "", password: "", nombre_negocio: "", giro: "Abarrotes", ciudad: "" });
   const campo = (k: keyof typeof form) => ({
     value: form[k],
@@ -114,7 +115,11 @@ export function Acceso() {
     setCargando("form");
     setError(null);
     try {
-      entrar(await api.post<Sesion>("/auth/registro", { ...form, ciudad: form.ciudad || null }));
+      const { nombre, email, password } = form;
+      const cuerpo = esContador
+        ? { nombre, email, password, es_contador: true }
+        : { ...form, ciudad: form.ciudad || null };
+      entrar(await api.post<Sesion>("/auth/registro", cuerpo));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -162,24 +167,35 @@ export function Acceso() {
                     <label htmlFor="nombre">Tu nombre</label>
                     <input id="nombre" className="input" required minLength={2} {...campo("nombre")} />
                   </div>
-                  <div className="campo">
-                    <label htmlFor="negocio">Nombre de tu negocio</label>
-                    <input id="negocio" className="input" required minLength={2} {...campo("nombre_negocio")} />
-                  </div>
-                  <div className="grid grid-2" style={{ gap: 12 }}>
-                    <div className="campo">
-                      <label htmlFor="giro">Giro</label>
-                      <select id="giro" className="select" {...campo("giro")}>
-                        {["Abarrotes", "Miscelánea", "Papelería", "Ropa y accesorios", "Frutería", "Farmacia", "Otro comercio"].map((g) => (
-                          <option key={g}>{g}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="campo">
-                      <label htmlFor="ciudad">Ciudad</label>
-                      <input id="ciudad" className="input" {...campo("ciudad")} />
-                    </div>
-                  </div>
+                  <label className="casilla-contador">
+                    <input type="checkbox" checked={esContador} onChange={(e) => setEsContador(e.target.checked)} />
+                    <span>
+                      <strong>Soy contador</strong>
+                      <span className="muted pequeno">No tengo negocio propio: solo voy a revisar los negocios que me inviten.</span>
+                    </span>
+                  </label>
+                  {!esContador && (
+                    <>
+                      <div className="campo">
+                        <label htmlFor="negocio">Nombre de tu negocio</label>
+                        <input id="negocio" className="input" required minLength={2} {...campo("nombre_negocio")} />
+                      </div>
+                      <div className="grid grid-2" style={{ gap: 12 }}>
+                        <div className="campo">
+                          <label htmlFor="giro">Giro</label>
+                          <select id="giro" className="select" {...campo("giro")}>
+                            {["Abarrotes", "Miscelánea", "Papelería", "Ropa y accesorios", "Frutería", "Farmacia", "Otro comercio"].map((g) => (
+                              <option key={g}>{g}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="campo">
+                          <label htmlFor="ciudad">Ciudad</label>
+                          <input id="ciudad" className="input" {...campo("ciudad")} />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>

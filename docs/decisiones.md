@@ -23,6 +23,14 @@ Registro breve de las decisiones importantes y su porqué (proyecto de aprendiza
 `llama3.2:3b` corre en CPU a ~7–8 tokens/s en el equipo de desarrollo. Por eso:
 - El chat responde en **streaming**: las cifras aparecen al instante y la interpretación llega palabra por palabra (unos 15 s en total).
 - Las alertas se muestran primero con su plantilla. La versión redactada por IA se pide en segundo plano (una sola llamada para todas) y queda en caché.
+- Caché común (`app/llm/cache.py`, 2026-10-09) para alertas y para «Clara te lo explica». Funciona así:
+  - Con los mismos datos se devuelve la misma respuesta, sin volver a llamar al modelo.
+  - Dos peticiones iguales simultáneas (React `StrictMode` pide dos veces en desarrollo) hacen una sola llamada.
+  - Una respuesta que la guardia rechazó también se guarda, para no esperar otra vez al modelo por un texto que se volvería a descartar. Solo se reintenta cuando Ollama no respondió.
+  - El tamaño está acotado.
+  - Antes, cada visita a Proyecciones, Impuestos o Deudas costaba de 10 a 20 s de modelo, y Ollama atiende una petición a la vez, así que se formaba una fila.
+- `keep_alive: 30m` en las llamadas a Ollama: el modelo sigue cargado entre peticiones (por defecto lo descarga a los 5 min).
+- El chat flotante y la página Resumen se cargan de forma diferida: la pantalla de inicio de sesión ya no descarga Recharts ni el lector de Markdown (el archivo principal bajó de 827 KB a 314 KB).
 
 ## Modelo de datos
 
@@ -45,6 +53,8 @@ Registro breve de las decisiones importantes y su porqué (proyecto de aprendiza
 - JWT con contraseñas PBKDF2 (biblioteca estándar, sin dependencias con binarios).
 - Toda ruta `/empresas/{id}` pasa por `empresa_autorizada`, que verifica la membresía del usuario autenticado. Si no la tiene responde **404** (no 403), para no revelar que la empresa existe.
 - Rol `consulta` (p. ej., el contador): solo lectura. No puede importar ni cambiar umbrales (`empresa_editable`).
+- Invitar al contador (2026-10-09): el dueño, desde **Mi equipo**, da acceso de `consulta` a una cuenta **que ya existe**, escribiendo su correo, y puede quitárselo. No hay invitaciones pendientes ni envío de correos: es lo más simple para el MVP. El registro tiene la opción «Soy contador», que crea la cuenta sin negocio propio. El dueño también puede volver **dueño** a un invitado (mismos permisos que él, incluido administrar Mi equipo) y regresarlo después a «solo ver». Nadie puede cambiar ni quitar su propio acceso, así que ningún negocio se queda sin dueño. Riesgo aceptado: un segundo dueño podría quitarle el acceso al primero; por eso la interfaz pide confirmar antes de volver dueño a alguien.
+- Perfil (2026-10-09): el menú de la cuenta (arriba a la derecha) muestra nombre y correo y lleva a **Mi perfil**, donde se cambia el nombre y la contraseña. El correo no se puede cambiar, porque es con el que otros invitan a la persona. Si la contraseña actual es incorrecta se responde 400 y no 401, para que el frontend no cierre la sesión.
 - Los logs no incluyen cifras ni contenido enviado al LLM.
 
 ## Proyecciones, impuestos y deudas (aprobado el 2026-10-08)
@@ -61,6 +71,27 @@ Los impuestos, que CLAUDE.md §3 dejaba para la fase 2, se adelantan a petición
 - La simulación es de inventario: ventas diarias Poisson con estacionalidad (regreso a clases, Día de las Madres, Buen Fin, Navidad) y tendencia. Al llegar al punto de reorden se registra una compra, así que ventas, compras y stock son coherentes entre sí.
 - La Papelería cuadra **exactamente** con el caso base de §12. Ese caso tiene un margen bruto del 55.9%, alto para una papelería real, pero se respetó porque es el criterio de calidad del proyecto.
 - Los escenarios de alerta se construyen sin romper la coherencia. Por ejemplo, "por agotarse" reduce la última compra del producto, después de la cual el stock solo baja, de modo que nunca queda negativo.
+
+## Inicio sencillo (aprobado el 2026-10-09)
+
+Pensado para la dueña de una tienda muy pequeña (una señora de 80 años con una frutería) que no lee gráficas, no conoce términos de negocio y no sabe qué preguntar.
+
+- **Es lo primero que se ve al entrar.** Va sin menú lateral, con letra grande y una sola columna. El panel de siempre queda como **modo avanzado**, sin cambios. Se recuerda el último modo que la persona eligió **con un botón** («Ver todo con detalle» o «Volver al Inicio sencillo»); entrar a «Ver detalles» no cambia su modo.
+- **Rutas:** `/` es el Inicio sencillo y el Resumen del modo avanzado se movió a `/resumen`.
+- **Contenido:**
+  - ¿Cómo te fue?, con semáforo y la cuenta Vendiste − Gastaste = Te quedó.
+  - Una gráfica de barras de 6 meses: sin eje Y y con el valor sobre cada barra, porque quien la lee no interpreta escalas.
+  - Los productos que más dejan, con «¿te queda?».
+  - Lo que viene: venta esperada, si alcanza el dinero y qué comprar.
+  - Mini tarjetas de impuestos y deudas.
+  - Cada tarjeta tiene «¿Qué es esto?» y «Ver detalles», que lleva a la página avanzada.
+- **`GET /empresas/{id}/inicio`** junta en una llamada (~0.6 s) las cifras de los servicios que ya existen; no calcula nada nuevo. La frase del semáforo la arma el código, con los mismos umbrales que las alertas.
+- **Ventana de Clara:**
+  - Muestra una explicación fija escrita por personas, preguntas ya hechas por tema y un campo para escribir o dictar. La conversación es aparte del chat flotante.
+  - **Primero responde el sistema** (`usar_ia: false`): sale al instante y siempre es correcto.
+  - El botón «Explícamelo con otras palabras» pide la redacción de la IA en **modo sencillo** y la marca como «Redactado por IA».
+  - Motivo: el modelo de 3B, aun con la guardia de cifras, daba consejos con lógica equivocada que la guardia no puede detectar. Ejemplos: «para pagar menos impuestos, aumenta tus ingresos» y «los gastos sin factura se acreditan». Para quien confía en todo lo que lee, la respuesta principal no puede depender de eso.
+  - Algunas preguntas guía muestran un texto y le mandan al chat otra frase que su detector de intenciones sí reconoce. Por ejemplo, «¿Qué tengo que comprar?» se envía como «¿Qué productos tengo que resurtir?».
 
 ## Interfaz
 

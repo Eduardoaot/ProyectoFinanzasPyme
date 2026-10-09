@@ -256,3 +256,37 @@
 input[type="range"] { width: 100%; accent-color: var(--celeste); height: 28px; }
 input[type="checkbox"] { accent-color: var(--celeste); width: 16px; height: 16px; }
 .cajon form.cuerpo { display: flex; flex-direction: column; gap: 14px; }
+
+/* ---------- Mi equipo (invitar al contador) ---------- */
+.equipo { align-items: start; }
+.equipo-reglas { list-style: none; margin: 16px 0 8px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.equipo-reglas li { display: flex; gap: 8px; align-items: flex-start; }
+.equipo-reglas svg { flex: none; margin-top: 2px; color: var(--celeste); }
+.lista-accesos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.lista-accesos > li { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.lista-accesos > li:last-child { border-bottom: 0; }
+.lista-accesos .datos { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 160px; }
+.lista-accesos .datos .pequeno { overflow-wrap: anywhere; }
+
+/* ---------- Registro: casilla «Soy contador» ---------- */
+.casilla-contador { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; }
+.casilla-contador input { margin-top: 3px; flex: none; }
+.casilla-contador > span { display: flex; flex-direction: column; gap: 2px; }
+
+/* ---------- Cuenta sin negocios ---------- */
+.sin-negocios { min-height: 100dvh; display: grid; place-items: center; padding: 16px; background: var(--bg); }
+.sin-negocios .caja { width: min(480px, 100%); display: flex; flex-direction: column; gap: 14px; padding: 28px; }
+.sin-negocios h1 { margin: 6px 0 0; font-size: 1.5rem; }
+.sin-negocios p { margin: 0; }
+
+/* Nota de contexto al pie de una tarjeta: se lee si se busca, pero no compite con las cifras. */
+.nota-pie { margin: 4px 0 0; padding-top: 10px; border-top: 1px dashed var(--line); color: var(--muted); line-height: 1.5; }
+.nota-pie svg { display: inline; vertical-align: -2px; margin-right: 2px; }
+
+/* Simulador: se ve como un espacio de prueba, distinto de las tarjetas con datos reales. */
+.tarjeta-simulador { border: 1.5px dashed color-mix(in srgb, var(--celeste) 55%, var(--line)); background: color-mix(in srgb, var(--celeste-soft) 35%, var(--surface)); }
+.tarjeta-simulador .mini-kpi { background: var(--surface); }
+
+/* Mi equipo: selector de permiso por persona */
+.select-rol { width: auto; height: 34px; font-size: var(--fs-sm); }
+.perfil { align-items: start; }

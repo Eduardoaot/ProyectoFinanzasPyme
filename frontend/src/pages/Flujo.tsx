@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowDownLeft, ArrowUpRight, CalendarClock, ChartColumnBig, Landmark, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CalendarClock, ChartColumnBig, Info, Wallet } from "lucide-react";
 import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { EJE, Leyenda, SERIE, TooltipGrafica } from "../components/charts/comun";
 import { Aviso, Semaforo, Tarjeta, TarjetaCargando, TituloTarjeta } from "../components/ui/basicos";
@@ -146,10 +146,10 @@ export function Flujo() {
                   </div>
                 );
               })}
-              <Aviso>
-                <Landmark size={14} style={{ display: "inline", verticalAlign: -2 }} /> La proyección usa una línea base (promedio
-                móvil de 30 días). En la siguiente fase se agregarán escenarios y temporadas.
-              </Aviso>
+              <p className="nota-pie mini">
+                <Info size={12} aria-hidden="true" /> La proyección usa una línea base (promedio móvil de 30 días). En la siguiente
+                fase se agregarán escenarios y temporadas.
+              </p>
             </div>
           )}
         </Tarjeta>

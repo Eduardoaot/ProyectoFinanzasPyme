@@ -158,11 +158,41 @@ img, svg { display: block; }
   color: var(--celeste-strong);
 }
 .card-titulo:has(.icono-titulo) .sub { margin-left: 40px; }
+/* Lo de la derecha (semáforo o etiqueta) nunca se parte en dos líneas. */
+.card-titulo > .semaforo, .card-titulo > .chip { flex: none; white-space: nowrap; }
 
-/* Barra de controles de una sección: el filtro queda junto a lo que filtra. */
-.barra-seccion { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: calc(var(--sp-2) * -1); }
-.barra-seccion h2 { font-size: var(--fs-md); }
-.barra-seccion p { color: var(--muted); font-size: var(--fs-sm); margin-top: 2px; }
+/* Sección de página: encabezado con número e ícono para que cada tema se distinga del anterior. */
+.seccion-pagina { display: flex; flex-direction: column; gap: var(--sp-4); padding-top: var(--sp-5); border-top: 1px solid var(--line); }
+.seccion-encabezado { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.seccion-icono {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--celeste-soft);
+  color: var(--celeste-strong);
+}
+.seccion-numero {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--ink);
+  color: var(--surface);
+}
+.seccion-texto { flex: 1; min-width: 220px; }
+.seccion-texto h2 { font-size: var(--fs-lg); margin: 0; }
+.seccion-texto p { color: var(--muted); font-size: var(--fs-sm); margin: 2px 0 0; }
 
 /* ---------- KPI ---------- */
 .kpi {
@@ -403,6 +433,9 @@ img, svg { display: block; }
 /* Cerca de un borde de la pantalla el globo se alinea hacia adentro para no cortarse. */
 .ayuda.izq .burbuja { left: -8px; transform: none; }
 .ayuda.der .burbuja { left: auto; right: -8px; transform: none; }
+/* En la barra superior el globo abre hacia abajo; con :focus también se abre al tocarlo en el celular. */
+.ayuda.abajo .burbuja { bottom: auto; top: calc(100% + 8px); }
+.ayuda.abajo:focus .burbuja { display: block; }
 @keyframes aparecer-burbuja { from { opacity: 0; margin-bottom: -4px; } to { opacity: 1; margin-bottom: 0; } }
 
 /* ---------- Tooltip de gráficas ---------- */

@@ -1,0 +1,142 @@
+/* ---------- Inicio sencillo ----------
+   Pensado para alguien que no lee gráficas ni conoce términos de negocio: letra grande,
+   una sola columna, botones grandes y cada cosa en palabras de todos los días. */
+
+.app-sencilla { min-height: 100dvh; background: var(--bg); }
+.topbar-sencilla { padding: var(--sp-3) var(--sp-5); }
+.logo-sencillo { display: inline-flex; flex: none; }
+.contenido-sencillo { width: min(860px, 100%); margin: 0 auto; padding: var(--sp-5) 16px 48px; display: flex; flex-direction: column; gap: var(--sp-5); }
+
+.inicio-sencillo { display: flex; flex-direction: column; gap: var(--sp-5); font-size: 1.125rem; line-height: 1.55; }
+.inicio-sencillo h1 { font-size: 1.75rem; margin: 0; }
+.saludo-sencillo { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; }
+
+/* Botones grandes: fáciles de tocar (mínimo 48 px de alto). */
+.btn.grande { min-height: 50px; padding: 0 18px; font-size: 1.0625rem; font-weight: 650; border-radius: 12px; text-decoration: none; gap: 8px; }
+.input.grande { min-height: 50px; font-size: 1.0625rem; }
+.boton-clara { min-height: 56px; font-size: 1.125rem; }
+
+.tarjeta-sencilla {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgb(13 17 23 / 0.04);
+}
+.tarjeta-sencilla h2 { display: flex; align-items: center; gap: 12px; margin: 0; font-size: 1.375rem; line-height: 1.3; }
+.icono-sencillo { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--celeste-soft); color: var(--celeste-strong); }
+.frase-sencilla { margin: 0; font-size: 1.125rem; }
+.acciones-sencillas { display: flex; gap: 10px; flex-wrap: wrap; padding-top: var(--sp-2); border-top: 1px solid var(--line); }
+
+/* Semáforo con ícono y palabra, nunca solo color. */
+.estado-sencillo { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; margin: 0; padding: 8px 14px; border-radius: 999px; font-weight: 700; font-size: 1.125rem; }
+.estado-sencillo.verde { color: var(--ok-ink); background: var(--ok-soft); }
+.estado-sencillo.amarillo { color: var(--warn-ink); background: var(--warn-soft); }
+.estado-sencillo.rojo { color: var(--bad-ink); background: var(--bad-soft); }
+
+/* Vendiste − Gastaste = Te quedó: la cuenta escrita como se haría en papel. */
+.cuenta-sencilla { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; }
+.cuenta-sencilla > div { flex: 1 1 150px; display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 14px; background: var(--surface-2); }
+.cuenta-sencilla > div span { color: var(--ink-2); font-weight: 600; }
+.cuenta-sencilla > div strong { font-size: 1.625rem; font-variant-numeric: tabular-nums; }
+.cuenta-sencilla .resultado { background: var(--ok-soft); }
+.cuenta-sencilla .resultado strong { color: var(--ok-ink); }
+.cuenta-sencilla .resultado.negativo { background: var(--bad-soft); }
+.cuenta-sencilla .resultado.negativo strong { color: var(--bad-ink); }
+.cuenta-sencilla .signo { align-self: center; font-size: 1.75rem; font-weight: 700; color: var(--muted); }
+
+.tabla-sencilla { font-size: 1rem; }
+.tabla-sencilla td, .tabla-sencilla th { padding-top: 12px; padding-bottom: 12px; }
+.tabla-sencilla .semaforo { font-size: 0.875rem; white-space: nowrap; }
+
+.lista-sencilla { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.lista-sencilla li { display: flex; gap: 10px; align-items: flex-start; }
+.lista-sencilla li svg { flex: none; margin-top: 3px; }
+.lista-sencilla li.bien svg { color: var(--ok-ink); }
+.lista-sencilla li.mal { padding: 12px 14px; border-radius: 12px; background: var(--bad-soft); }
+.lista-sencilla li.mal svg { color: var(--bad-ink); }
+
+.compras-sencillas { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 14px; background: var(--surface-2); }
+.compras-sencillas h3 { margin: 0; font-size: 1.125rem; }
+.compras-sencillas ul { list-style: none; margin: 0; padding: 0; }
+.compras-sencillas li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--line); flex-wrap: wrap; }
+.compras-sencillas li:last-child { border-bottom: 0; }
+.compras-sencillas p { margin: 0; }
+
+.mini-sencillas { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: var(--sp-5); }
+
+.pase-avanzado { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 16px; text-align: center; border: 1.5px dashed var(--line); border-radius: 18px; }
+.pase-avanzado p { margin: 0; color: var(--ink-2); font-size: 1.0625rem; }
+
+/* Enlace del modo avanzado de vuelta al Inicio sencillo (en el menú lateral). */
+.volver-sencillo { display: flex; align-items: center; gap: 8px; margin: 0 var(--sp-2) var(--sp-3); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); color: var(--sidebar-ink-fuerte); font-weight: 600; text-decoration: none; font-size: var(--fs-sm); }
+.volver-sencillo:hover { background: var(--sidebar-hover); }
+
+.girada { transform: rotate(180deg); }
+
+/* ---------- Ventana de Clara ---------- */
+.velo-clara { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; padding: 16px; background: rgb(8 11 15 / 0.55); }
+.ventana-clara {
+  width: min(720px, 100%);
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  font-size: 1.125rem;
+  line-height: 1.55;
+}
+.ventana-clara h3 { margin: 0; font-size: 1.125rem; }
+.ventana-clara-cabecera { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.ventana-clara-cabecera h2 { flex: 1; margin: 0; font-size: 1.375rem; }
+.orbe-clara { flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: radial-gradient(circle at 30% 30%, #9cc8f2, #4a90d9 55%, #2f6fb3); }
+.ventana-clara-cuerpo { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 18px; }
+.que-es { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; padding: 16px 18px; border-radius: 14px; background: var(--celeste-soft); }
+.que-es p { margin: 0; }
+.preguntas-guia { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 10px; }
+.pregunta-guia {
+  min-height: 56px;
+  padding: 12px 16px;
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.pregunta-guia:hover:not(:disabled) { border-color: var(--celeste); background: var(--celeste-soft); }
+.pregunta-guia[aria-pressed="true"] { border-color: var(--celeste); }
+.pregunta-guia:disabled { opacity: 0.55; cursor: wait; }
+.pregunta-hecha p { margin: 0; color: var(--ink-2); }
+.respuesta-clara { padding: 16px 18px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); }
+.respuesta-sencilla { margin: 0; font-size: 1.1875rem; }
+.respuesta-sencilla.error { color: var(--bad-ink); }
+.clara-pensando { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--ink-2); }
+.que-hacer ul { margin: 6px 0 0; padding-left: 22px; }
+.numeros-sencillos { font-size: 1rem; }
+.ventana-clara-pie { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--line); }
+.ventana-clara-pie .input { flex: 1; min-width: 0; }
+.ventana-clara-aviso { margin: 0; padding: 0 20px 14px; }
+
+@media (max-width: 600px) {
+  .tarjeta-sencilla { padding: 18px; }
+  .inicio-sencillo h1 { font-size: 1.5rem; }
+  .boton-clara { width: 100%; justify-content: center; }
+  .acciones-sencillas .btn { flex: 1 1 100%; justify-content: center; }
+  .cuenta-sencilla .signo { display: none; }
+  .velo-clara { padding: 0; place-items: end stretch; }
+  .ventana-clara { width: 100%; max-height: 92dvh; border-radius: 20px 20px 0 0; }
+  .solo-ancho { display: none; }
+  .topbar-sencilla .logo-sencillo { display: none; }
+}
+
+/* Apoyo de la IA debajo de la respuesta del sistema. */
+.otras-palabras { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; padding: 14px 16px; border-radius: 12px; border: 1.5px dashed color-mix(in srgb, var(--celeste) 55%, var(--line)); background: var(--surface); }
+.otras-palabras-boton { align-self: flex-start; }

@@ -1,11 +1,13 @@
-import { CalendarRange, LogOut, Menu, Moon, Sun } from "lucide-react";
+import { CalendarRange, Menu, Moon, Sun } from "lucide-react";
 import { usePeriodo } from "../../context/Periodo";
 import { useSesion } from "../../context/Sesion";
+import { MenuUsuario } from "./MenuUsuario";
+import { SelectorEmpresa } from "./SelectorEmpresa";
 
 export function Topbar({ tema, alternarTema, abrirMenu }: { tema: "light" | "dark"; alternarTema: () => void; abrirMenu: () => void }) {
-  const { empresas, empresa, salir } = useSesion();
+  const { usuario, empresas, empresa, idEmpresa, cambiarEmpresa, salir } = useSesion();
   const { periodos, meses, setMeses, ventanas, seleccion, setClave } = usePeriodo();
-  const actual = empresas.find((e) => e.id_empresa === empresa?.id_empresa);
+  const actual = empresas.find((e) => e.id_empresa === idEmpresa);
   const nombre = actual?.nombre_negocio ?? empresa?.nombre_negocio ?? "—";
 
   return (
@@ -13,13 +15,7 @@ export function Topbar({ tema, alternarTema, abrirMenu }: { tema: "light" | "dar
       <button className="btn icono fantasma menu-movil" onClick={abrirMenu} aria-label="Abrir menú">
         <Menu size={20} />
       </button>
-      <div className="selector-empresa">
-        <span className="avatar" aria-hidden="true">
-          {nombre.charAt(0)}
-        </span>
-        <span className="nombre-empresa">{nombre}</span>
-        {actual?.rol === "consulta" && <span className="chip">solo lectura</span>}
-      </div>
+      <SelectorEmpresa empresas={empresas} idActual={idEmpresa ?? undefined} nombre={nombre} onCambiar={cambiarEmpresa} />
       <div className="espacio" />
       {periodos.length > 0 && (
         <div className="filtro-periodo">
@@ -46,12 +42,12 @@ export function Topbar({ tema, alternarTema, abrirMenu }: { tema: "light" | "dar
           </select>
         </div>
       )}
-      <button className="btn icono fantasma" onClick={alternarTema} aria-label={tema === "dark" ? "Usar tema claro" : "Usar tema oscuro"}>
-        {tema === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-      </button>
-      <button className="btn icono fantasma" onClick={salir} aria-label="Cerrar sesión" title="Cerrar sesión">
-        <LogOut size={18} />
-      </button>
+      <div className="topbar-cuenta">
+        <button className="btn icono fantasma" onClick={alternarTema} aria-label={tema === "dark" ? "Usar tema claro" : "Usar tema oscuro"}>
+          {tema === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+        <MenuUsuario usuario={usuario} onSalir={salir} />
+      </div>
     </header>
   );
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { textoALeer, textoInterrumpido } from "../context/Chat";
+import { textoALeer, textoInterrumpido } from "../hooks/useConversacion";
 import { cambio, dinero, pct, textoParaVoz } from "../lib/formato";
 import { rangosPeriodo, rangoAtras, ultimosMeses, ventanasPeriodo } from "../lib/periodos";
 import type { ChatRespuesta } from "../lib/tipos";

@@ -14,6 +14,14 @@ export interface EmpresaResumen {
   rol: "dueno" | "consulta";
 }
 
+export interface Acceso {
+  id_usuario: number;
+  nombre: string;
+  email: string;
+  rol: "dueno" | "consulta";
+  eres_tu: boolean;
+}
+
 export interface Sesion {
   token: string;
   usuario: Usuario;
@@ -299,4 +307,40 @@ export interface Importacion {
   filas_ok: number;
   filas_con_error: number;
   errores: ErrorFila[];
+}
+
+/* ---------- Inicio sencillo (GET /empresas/{id}/inicio) ---------- */
+export type Estado3 = "verde" | "amarillo" | "rojo";
+
+export interface Inicio {
+  tiene_datos: boolean;
+  como_te_fue: {
+    mes: string;
+    ventas: number;
+    te_quedo: number;
+    gastaste: number;
+    cambio_ventas: number | null;
+    estado: Estado3;
+    frase: string;
+  } | null;
+  ventas_por_mes: { etiqueta: string; ventas: number; actual: boolean }[];
+  productos: { nombre: string; unidad: string; vendiste: number; te_dejo: number; inventario: Semaforo }[];
+  lo_que_viene: {
+    mes: string;
+    ventas_esperadas: number;
+    ganancia_esperada: number;
+    efectivo_hoy: number;
+    efectivo_fin_de_mes: number;
+    te_alcanza: boolean;
+    fecha_riesgo: string | null;
+    comprar: { nombre: string; cantidad: number; unidad: string; costo: number }[];
+    total_compra: number;
+  } | null;
+  impuestos: { mes: string; a_pagar: number; fecha_limite: string; saldo_a_favor: number; regimen: string } | null;
+  deudas: {
+    total: number;
+    pago_del_mes: number;
+    paga_primero: string | null;
+    proximo_pago: { acreedor: string; fecha: string; monto: number } | null;
+  } | null;
 }

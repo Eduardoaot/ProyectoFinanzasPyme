@@ -174,9 +174,14 @@ docs/             decisiones.md y esquema.md
 | GET | `/api/empresas/{id}/forecast?serie&id_producto&dias` | Pronóstico (línea base; misma firma para fase 2) |
 | GET | `/api/empresas/{id}/alertas?redactar_ia=true` | Alertas deterministas, redactadas por IA |
 | PUT | `/api/empresas/{id}/umbrales` | Umbrales de alertas configurables |
-| POST | `/api/empresas/{id}/chat` | Respuesta completa `{"answer": …}` |
+| GET | `/api/empresas/{id}/inicio` | Inicio sencillo: pocas cifras ya calculadas (cómo te fue, 6 meses, productos, lo que viene, impuestos y deudas) |
+| POST | `/api/empresas/{id}/chat` | Respuesta completa `{"answer": …}`. Opcionales: `sencillo` (palabras de todos los días) y `usar_ia: false` (solo el texto del sistema) |
 | POST | `/api/empresas/{id}/chat/stream` | Respuesta en streaming (NDJSON) |
 | POST | `/api/empresas/{id}/importaciones/analizar` → `/{token}/previsualizar` → `/{token}/confirmar` | Ingesta de Excel/CSV |
 | DELETE | `/api/empresas/{id}/importaciones/{id_importacion}` | Deshacer una carga |
+| GET, POST | `/api/empresas/{id}/accesos` | Quién ve el negocio; invitar a una cuenta existente como `consulta` (solo dueño) |
+| PATCH, DELETE | `/api/empresas/{id}/accesos/{id_usuario}` | Cambiar permiso (`consulta` ↔ `dueno`) o quitar acceso a otra persona (solo dueño) |
+| PATCH | `/api/auth/yo` | Cambiar tu nombre |
+| POST | `/api/auth/password` | Cambiar tu contraseña (pide la actual) |
 
 > Los consejos son orientativos y no constituyen asesoría financiera, contable ni fiscal.

@@ -53,17 +53,6 @@
   display: grid;
   place-items: center;
 }
-.sidebar .pie {
-  margin-top: auto;
-  padding: var(--sp-3);
-  border-radius: 12px;
-  background: var(--sidebar-pie-bg);
-  border: 1px solid var(--sidebar-pie-borde);
-  font-size: var(--fs-xs);
-  color: var(--sidebar-pie-ink);
-}
-.sidebar .pie strong { color: var(--sidebar-ink-fuerte); font-size: var(--fs-sm); }
-
 /* ---------- Barra superior ---------- */
 .topbar {
   position: sticky;
@@ -84,24 +73,113 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px 6px 6px;
+  padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid var(--line);
   background: var(--surface);
   min-width: 0;
 }
-.selector-empresa .avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(135deg, #4a90d9, #2f6fb3);
-  flex: none;
-}
 .selector-empresa .nombre-empresa { font-weight: 650; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.selector-empresa .acceso-consulta { flex: none; gap: 5px; }
+/* Con nombres largos el recuadro se recorta con "…" en vez de empujar los botones a otra línea. */
+.selector-empresa { max-width: min(460px, 48vw); }
+.boton-empresa { min-width: 0; }
+.boton-empresa .nombre-empresa { min-width: 0; }
+/* Tema y cuenta van juntos y siempre a la derecha, aunque la barra ocupe dos líneas. */
+.topbar-cuenta { display: flex; align-items: center; gap: var(--sp-2); margin-left: auto; flex: none; }
+/* Con varios negocios el recuadro se vuelve un menú. */
+.selector-empresa.con-menu { position: relative; padding: 4px 8px 4px 4px; }
+.boton-empresa {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.boton-empresa:hover { background: var(--celeste-soft); }
+.boton-empresa svg { flex: none; color: var(--muted); transition: transform 0.2s var(--ease); }
+.boton-empresa svg.girada { transform: rotate(180deg); }
+.menu-empresas {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 45;
+  width: max-content;
+  min-width: 100%;
+  max-width: min(360px, calc(100vw - 32px));
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+.opcion-empresa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.opcion-empresa:hover { background: var(--celeste-soft); }
+.opcion-empresa.elegida { background: color-mix(in srgb, var(--celeste-soft) 70%, transparent); }
+.opcion-empresa .datos { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.opcion-empresa .datos .muted { font-size: var(--fs-xs); }
+.opcion-empresa .icono-tienda { flex: none; color: var(--celeste); }
+.opcion-empresa .palomita { flex: none; color: var(--celeste-strong); }
+
+/* Menú de la cuenta (arriba a la derecha). */
+.menu-usuario { position: relative; }
+.boton-usuario {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.boton-usuario:hover { background: var(--celeste-soft); }
+.boton-usuario svg:last-child { color: var(--muted); transition: transform 0.2s var(--ease); }
+.boton-usuario svg.girada { transform: rotate(180deg); }
+.panel-usuario {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 45;
+  width: min(280px, calc(100vw - 32px));
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+.datos-usuario { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.datos-usuario > * { overflow-wrap: anywhere; }
+.acciones-usuario { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.acciones-usuario .btn { justify-content: center; text-decoration: none; }
 .filtro-periodo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .filtro-periodo .select { height: 38px; width: auto; min-width: 150px; }
 
@@ -167,13 +245,13 @@
   }
   .topbar { padding: var(--sp-2) var(--sp-4); }
   .topbar .menu-movil { display: inline-flex; }
-  .selector-empresa { flex: 1; min-width: 0; }
+  .selector-empresa { flex: 1; min-width: 0; max-width: none; }
   .selector-empresa .nombre-empresa { max-width: none; }
-  .selector-empresa .chip { display: none; }
   .topbar .espacio { display: none; }
   .filtro-periodo { width: 100%; order: 10; flex-wrap: wrap; }
   .filtro-periodo > svg { display: none; }
   .filtro-periodo .select { flex: 1 1 45%; min-width: 0; }
+  .boton-usuario .nombre-usuario { display: none; }
   .fab-chat { right: 16px; bottom: 16px; padding: 0 14px; }
   .fab-chat .texto { display: none; }
   .panel-chat { right: 8px; left: 8px; width: auto; bottom: 16px; height: calc(100dvh - 32px); }

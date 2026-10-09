@@ -198,20 +198,20 @@ export function Productos() {
 
           <div ref={tablaRef} style={{ scrollMarginTop: 80 }}>
           <Tarjeta retraso={0.1} interactiva={false}>
-            <div className="fila-entre envolver salto-tabla" ref={tablaRef}>
+            <div className="fila-entre envolver salto-tabla">
               <TituloTarjeta icono={PackageSearch} titulo="Todos tus productos" sub={`${filtrados.length} de ${datos.productos.length} productos`} />
               <div className="filtros">
+                <div style={{ position: "relative" }}>
+                  <Search size={16} style={{ position: "absolute", left: 12, top: 13, color: "var(--faint)" }} aria-hidden="true" />
+                  <input className="input" style={{ paddingLeft: 36 }} placeholder="Buscar producto…" value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)} aria-label="Buscar producto" />
+                </div>
                 <select className="select" style={{ width: 180 }} value={semaforo} onChange={(e) => setSemaforo(e.target.value as TipoSemaforo | "")} aria-label="Inventario">
                   <option value="">Todo el inventario</option>
                   {(["rojo", "amarillo", "verde", "sin_movimiento"] as TipoSemaforo[]).map((s) => (
                     <option key={s} value={s}>{ETIQUETA_SEMAFORO[s]} ({datos.inventario[s]})</option>
                   ))}
                 </select>
-                <div style={{ position: "relative" }}>
-                  <Search size={16} style={{ position: "absolute", left: 12, top: 13, color: "var(--faint)" }} aria-hidden="true" />
-                  <input className="input" style={{ paddingLeft: 36 }} placeholder="Buscar producto…" value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)} aria-label="Buscar producto" />
-                </div>
                 <select className="select" style={{ width: 190 }} value={categoria} onChange={(e) => setCategoria(e.target.value)} aria-label="Categoría">
                   <option value="">Todas las categorías</option>
                   {categorias.map((c) => <option key={c}>{c}</option>)}

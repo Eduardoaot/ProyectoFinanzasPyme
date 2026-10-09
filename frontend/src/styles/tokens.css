@@ -37,9 +37,6 @@
   --sidebar-seccion: #9aa4b1;
   --sidebar-hover: #f1f5f9;
   --sidebar-activo: linear-gradient(90deg, rgb(74 144 217 / 0.16), rgb(74 144 217 / 0.04));
-  --sidebar-pie-bg: #f7f9fb;
-  --sidebar-pie-borde: #e2e7ee;
-  --sidebar-pie-ink: #6b7684;
 
   /* Estado (semáforo) — siempre con ícono + texto */
   --ok: #0ca30c;
@@ -116,9 +113,6 @@
   --sidebar-seccion: #5f6b79;
   --sidebar-hover: rgb(255 255 255 / 0.04);
   --sidebar-activo: linear-gradient(90deg, rgb(74 144 217 / 0.22), rgb(74 144 217 / 0.06));
-  --sidebar-pie-bg: #161c25;
-  --sidebar-pie-borde: #1f2731;
-  --sidebar-pie-ink: #8e9aa8;
   --ok-ink: #5fd36f;
   --ok-soft: #10261a;
   --warn-ink: #f4c35a;

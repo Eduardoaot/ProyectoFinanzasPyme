@@ -7,6 +7,7 @@ import "./styles/global.css";
 import "./styles/layout.css";
 import "./styles/chat.css";
 import "./styles/paginas.css";
+import "./styles/sencillo.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

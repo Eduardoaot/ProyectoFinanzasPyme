@@ -65,7 +65,7 @@ export function NumeroAnimado({ valor, formato, className }: { valor: number; fo
 }
 
 /* ---------- Ayuda (término técnico en tooltip) ---------- */
-export function Ayuda({ texto }: { texto: string }) {
+export function Ayuda({ texto, abajo = false }: { texto: string; abajo?: boolean }) {
   const id = useId();
   const [lado, setLado] = useState<"" | "izq" | "der">("");
   // El globo mide hasta 260px: si el ícono está cerca de un borde, se alinea hacia adentro para que se lea completo.
@@ -74,7 +74,7 @@ export function Ayuda({ texto }: { texto: string }) {
     setLado(r.left < 150 ? "izq" : window.innerWidth - r.right < 150 ? "der" : "");
   };
   return (
-    <span className={`ayuda ${lado}`} tabIndex={0} aria-describedby={id} onMouseEnter={ubicar} onFocus={ubicar}>
+    <span className={`ayuda ${lado} ${abajo ? "abajo" : ""}`} tabIndex={0} aria-describedby={id} onMouseEnter={ubicar} onFocus={ubicar}>
       <CircleHelp size={14} aria-hidden="true" />
       <span className="burbuja" role="tooltip" id={id}>
         {texto}
@@ -205,6 +205,41 @@ export function Tarjeta({
     >
       {children}
     </motion.section>
+  );
+}
+
+/* ---------- Sección de página: separa temas distintos dentro de un mismo módulo ---------- */
+export function Seccion({
+  numero,
+  icono: Icono,
+  titulo,
+  descripcion,
+  derecha,
+  children,
+}: {
+  numero: number;
+  icono: LucideIcon;
+  titulo: string;
+  descripcion?: string;
+  derecha?: ReactNode;
+  children: ReactNode;
+}) {
+  const id = useId();
+  return (
+    <section className="seccion-pagina" aria-labelledby={id}>
+      <header className="seccion-encabezado">
+        <span className="seccion-icono" aria-hidden="true">
+          <Icono size={18} />
+          <span className="seccion-numero">{numero}</span>
+        </span>
+        <div className="seccion-texto">
+          <h2 id={id}>{titulo}</h2>
+          {descripcion && <p>{descripcion}</p>}
+        </div>
+        {derecha}
+      </header>
+      {children}
+    </section>
   );
 }
 
