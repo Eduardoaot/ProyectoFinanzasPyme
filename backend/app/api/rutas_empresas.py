@@ -16,6 +16,7 @@ from app.finance import consultas as q
 from app.finance import esquemas as e
 from app.finance import servicio
 from app.forecasting.servicio import completar_dias, get_forecast_service
+from app.inicio import servicio as inicio_srv
 
 router = APIRouter(prefix="/empresas/{id_empresa}", tags=["panel"])
 
@@ -60,6 +61,12 @@ def guardar_umbrales(datos: UmbralesEntrada, conn: Conn, id_empresa: EmpresaEdit
     conn.execute(update(m.empresas).where(m.empresas.c.id_empresa == id_empresa)
                  .values(umbrales_alerta=datos.model_dump()))
     return umbrales_empresa(conn, id_empresa)
+
+
+@router.get("/inicio", response_model=inicio_srv.Inicio)
+def inicio(conn: Conn, id_empresa: EmpresaId) -> inicio_srv.Inicio:
+    """Inicio sencillo: pocas cifras, ya calculadas por los servicios del modo avanzado."""
+    return inicio_srv.inicio(conn, id_empresa)
 
 
 @router.get("/resumen", response_model=e.Resumen)

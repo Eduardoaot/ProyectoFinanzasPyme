@@ -27,6 +27,15 @@ REGLAS ESTRICTAS:
 - Nunca recomiendes bancos, instituciones ni productos financieros concretos. Un préstamo es solo una opción a evaluar.
 - No repitas todas las cifras: interpreta lo importante y da un consejo práctico."""
 
+# Se agrega al sistema cuando la pregunta viene del Inicio sencillo.
+MODO_SENCILLO = """
+MODO SENCILLO: quien pregunta no conoce palabras de negocio ni de contabilidad, y no sabe leer gráficas.
+- Cambia cada palabra técnica por palabras de todos los días: utilidad o ganancia = "lo que te quedó";
+  ventas = "lo que vendiste"; gastos de operación = "lo que pagas para tener abierto el negocio";
+  impuestos = "lo que le pagas al SAT"; flujo de efectivo = "el dinero que entra y sale de tu caja".
+- Frases cortas. Usa como máximo dos cifras, las más importantes.
+- NO agregues consejos que no vengan en DATOS o CONTEXTO, y menos sobre impuestos o deudas. Si das uno, que sea el más importante de ellos."""
+
 
 class ChatRespuesta(BaseModel):
     answer: str
@@ -78,10 +87,12 @@ def _markdown_cierre(h: Hechos, narrativa: str) -> str:
     return "\n\n".join(partes)
 
 
-def _prompt(h: Hechos, ctx: Contexto, mensaje: str) -> tuple[str, str]:
+def _prompt(h: Hechos, ctx: Contexto, mensaje: str, sencillo: bool = False) -> tuple[str, str]:
     lineas = h.para_llm or [linea for _, ls in h.secciones for linea in ls]
     datos = "\n".join(f"- {linea.replace('**', '')}" for linea in lineas)
     sistema = SISTEMA.format(negocio=ctx.negocio, giro=ctx.giro, oraciones=h.oraciones)
+    if sencillo:
+        sistema += MODO_SENCILLO
     usuario = (f"PREGUNTA: {mensaje}\nPERIODO: {ctx.periodo}\nDATOS:\n{datos}\n"
                f"CONTEXTO: {h.respaldo}\nENFOQUE: {h.enfoque}")
     return sistema, usuario
@@ -103,12 +114,12 @@ def _respuesta(intencion: str, ctx: Contexto, h: Hechos, narrativa: str, fuente:
 
 
 def responder(conn: Connection, id_empresa: int, mensaje: str, desde: date | None = None, hasta: date | None = None,
-              intencion_anterior: str | None = None) -> ChatRespuesta:
+              intencion_anterior: str | None = None, *, sencillo: bool = False, usar_ia: bool = True) -> ChatRespuesta:
     intencion, ctx, _ = _contexto(conn, id_empresa, mensaje, desde, hasta, intencion_anterior)
     h = CONSTRUCTORES[intencion](ctx)
     narrativa, fuente = h.respaldo, "plantilla"
-    if h.usa_llm:
-        sistema, usuario = _prompt(h, ctx, mensaje)
+    if h.usa_llm and usar_ia:
+        sistema, usuario = _prompt(h, ctx, mensaje, sencillo)
         texto = get_llm().chat(sistema, usuario, temperatura=0.4, max_tokens=220)
         limpio = _limpiar(texto or "", h, mensaje)
         if limpio:
@@ -117,14 +128,15 @@ def responder(conn: Connection, id_empresa: int, mensaje: str, desde: date | Non
 
 
 def responder_stream(conn: Connection, id_empresa: int, mensaje: str, desde: date | None = None,
-                     hasta: date | None = None, intencion_anterior: str | None = None) -> Iterator[dict]:
+                     hasta: date | None = None, intencion_anterior: str | None = None, *,
+                     sencillo: bool = False, usar_ia: bool = True) -> Iterator[dict]:
     """Eventos: 'inicio' (cifras al instante) → 'token' (texto de la IA) → 'final' (respuesta validada)."""
     intencion, ctx, _ = _contexto(conn, id_empresa, mensaje, desde, hasta, intencion_anterior)
     h = CONSTRUCTORES[intencion](ctx)
     yield {"tipo": "inicio", "intencion": intencion, "base": _markdown_base(h)}
     narrativa, fuente = h.respaldo, "plantilla"
-    if h.usa_llm:
-        sistema, usuario = _prompt(h, ctx, mensaje)
+    if h.usa_llm and usar_ia:
+        sistema, usuario = _prompt(h, ctx, mensaje, sencillo)
         texto = ""
         for fragmento in get_llm().chat_stream(sistema, usuario, temperatura=0.4, max_tokens=220):
             texto += fragmento
