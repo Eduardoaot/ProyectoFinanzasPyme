@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
 
-from app.api import rutas_auth, rutas_chat, rutas_empresas, rutas_ingesta, rutas_predictivo
+from app.api import rutas_auth, rutas_chat, rutas_empresas, rutas_equipo, rutas_ingesta, rutas_predictivo
 from app.config import get_settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -26,7 +26,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for router in (rutas_auth.router, rutas_empresas.router, rutas_chat.router, rutas_ingesta.router, rutas_predictivo.router):
+for router in (rutas_auth.router, rutas_empresas.router, rutas_chat.router, rutas_ingesta.router, rutas_predictivo.router,
+               rutas_equipo.router):
     app.include_router(router, prefix="/api")
 
 
