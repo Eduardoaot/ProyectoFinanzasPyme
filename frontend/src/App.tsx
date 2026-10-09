@@ -4,6 +4,7 @@ import { BrowserRouter, Link, Route, Routes } from "react-router-dom";
 import { AppLayout } from "./components/layout/AppLayout";
 import { Logo } from "./components/ui/basicos";
 import { Pagina } from "./components/ui/Pagina";
+import { ProveedorAlertas } from "./context/Alertas";
 import { ProveedorChat } from "./context/Chat";
 import { ProveedorPeriodo } from "./context/Periodo";
 import { ProveedorSesion, useSesion } from "./context/Sesion";
@@ -71,7 +72,8 @@ function Rutas() {
       ) : (
         <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <ProveedorPeriodo>
-            <ProveedorChat>
+            <ProveedorAlertas>
+              <ProveedorChat>
               <Routes>
                 <Route element={<AppLayout tema={tema} alternarTema={() => setTema((t) => (t === "dark" ? "light" : "dark"))} />}>
                   <Route index element={<Resumen />} />
@@ -84,7 +86,8 @@ function Rutas() {
                   <Route path="*" element={<NoEncontrada />} />
                 </Route>
               </Routes>
-            </ProveedorChat>
+              </ProveedorChat>
+            </ProveedorAlertas>
           </ProveedorPeriodo>
         </motion.div>
       )}

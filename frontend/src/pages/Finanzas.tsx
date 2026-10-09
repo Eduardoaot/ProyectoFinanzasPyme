@@ -72,7 +72,7 @@ export function Finanzas() {
           <TarjetaCargando alto={380} />
         )}
 
-        <div className="pila" style={{ gap: "var(--sp-5)" }}>
+        <div className="pila columna-er" style={{ gap: "var(--sp-5)" }}>
           {pe ? (
             <Tarjeta retraso={0.05}>
               <TituloTarjeta icono={Scale} titulo="Punto de equilibrio" sub="Cuánto necesitas vender al mes para no perder" />

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowDownUp, Award, Boxes, PackageSearch, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { EJE, Leyenda, SERIE, TooltipGrafica } from "../components/charts/comun";
 import { Aviso, Semaforo, Tarjeta, TarjetaCargando, TituloTarjeta } from "../components/ui/basicos";
@@ -102,6 +102,10 @@ export function Productos() {
   const [semaforo, setSemaforo] = useState<TipoSemaforo | "">("");
   const [orden, setOrden] = useState<{ campo: Orden; asc: boolean }>({ campo: "utilidad", asc: false });
   const [abierto, setAbierto] = useState<ProductoMetricas | null>(null);
+  const tablaRef = useRef<HTMLDivElement>(null);
+
+  const irALaTabla = () =>
+    tablaRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   const datos = pr.datos;
   const categorias = useMemo(() => [...new Set(datos?.productos.map((p) => p.categoria))].sort(), [datos]);
@@ -161,7 +165,7 @@ export function Productos() {
                 {(["rojo", "amarillo", "verde", "sin_movimiento"] as TipoSemaforo[]).map((s, i) => (
                   <motion.button key={s} className="card interactiva centrado" style={{ padding: 16, cursor: "pointer", alignItems: "center", gap: 8,
                     outline: semaforo === s ? "2px solid var(--celeste)" : undefined }}
-                    onClick={() => setSemaforo(semaforo === s ? "" : s)} aria-pressed={semaforo === s}
+                    onClick={() => { setSemaforo(semaforo === s ? "" : s); irALaTabla(); }} aria-pressed={semaforo === s}
                     initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 + i * 0.05 }} whileTap={{ scale: 0.97 }}>
                     <strong className="num" style={{ fontSize: "var(--fs-xl)" }}>{datos.inventario[s]}</strong>
                     <Semaforo estado={s} texto={{ rojo: "Por agotarse", amarillo: "Vigilar", verde: "Suficiente", sin_movimiento: "Sin ventas" }[s]} />
@@ -176,7 +180,7 @@ export function Productos() {
           </div>
 
           <Tarjeta retraso={0.1} interactiva={false}>
-            <div className="fila-entre envolver">
+            <div className="fila-entre envolver salto-tabla" ref={tablaRef}>
               <TituloTarjeta icono={PackageSearch} titulo="Todos tus productos" sub={`${filtrados.length} de ${datos.productos.length} productos`} />
               <div className="filtros">
                 <div style={{ position: "relative" }}>

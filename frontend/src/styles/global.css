@@ -57,6 +57,15 @@ img, svg { display: block; }
   border-radius: 6px;
 }
 
+/* Las gráficas de Recharts son focoseables por accesibilidad (capa de teclado),
+   pero aquí no mostramos el anillo: solo se quiere quitar el contorno visible. */
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-wrapper :focus,
+.recharts-wrapper :focus-visible {
+  outline: none;
+}
+
 .num { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 .justificado,
 .prosa p,

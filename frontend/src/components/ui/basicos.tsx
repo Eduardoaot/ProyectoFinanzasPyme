@@ -42,7 +42,7 @@ export function Logo({ tamano = 36, conTexto = true, claro = false }: { tamano?:
       {conTexto && (
         <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
           <strong style={{ fontSize: tamano * 0.46, letterSpacing: "-0.02em" }}>Cuentas Claras</strong>
-          <span style={{ fontSize: Math.max(11, tamano * 0.3), opacity: 0.6 }}>finanzas para tu tienda</span>
+          <span style={{ fontSize: Math.max(11, tamano * 0.3), opacity: 0.6 }}>Finanzas para tu negocio</span>
         </span>
       )}
     </span>
@@ -79,7 +79,7 @@ export function Ayuda({ texto }: { texto: string }) {
 
 /* ---------- Chip de cambio vs periodo anterior ---------- */
 export function Cambio({ valor, invertido = false }: { valor: number | null; invertido?: boolean }) {
-  if (valor === null || valor === undefined) return <span className="cambio neutro">Sin datos</span>;
+  if (valor === null || valor === undefined) return <span className="cambio neutro">Sin comparación</span>;
   const bueno = invertido ? valor < 0 : valor > 0;
   const clase = Math.abs(valor) < 0.0005 ? "neutro" : bueno ? "sube" : "baja";
   const Icono = valor > 0 ? ArrowUpRight : valor < 0 ? ArrowDownRight : Minus;

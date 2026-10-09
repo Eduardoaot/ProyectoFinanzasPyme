@@ -2,11 +2,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, Sparkles, X } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
+import { useAlertas } from "../../context/Alertas";
 import { useChat } from "../../context/Chat";
-import { usePeriodo } from "../../context/Periodo";
 import { useSesion } from "../../context/Sesion";
-import { useApi } from "../../hooks/useApi";
-import type { Alerta } from "../../lib/tipos";
 import { Conversacion } from "../chat/Conversacion";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
@@ -14,11 +12,10 @@ import { Topbar } from "./Topbar";
 export function AppLayout({ tema, alternarTema }: { tema: "light" | "dark"; alternarTema: () => void }) {
   const { empresa } = useSesion();
   const { chatAbierto, cerrarChat, alternarChat } = useChat();
-  const { params } = usePeriodo();
+  const { datos: alertas } = useAlertas();
   const ubicacion = useLocation();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [esMovil, setEsMovil] = useState(() => window.matchMedia("(max-width: 900px)").matches);
-  const alertas = useApi<Alerta[]>(empresa?.tiene_datos && params.desde ? `/empresas/${empresa.id_empresa}/alertas` : null, params);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 900px)");
@@ -31,7 +28,7 @@ export function AppLayout({ tema, alternarTema }: { tema: "light" | "dark"; alte
     cerrarChat();
   }, [ubicacion.pathname, cerrarChat]);
 
-  const rojas = alertas.datos?.filter((a) => a.nivel === "rojo").length ?? 0;
+  const rojas = alertas?.filter((a) => a.nivel === "rojo").length ?? 0;
   const enAsistente = ubicacion.pathname === "/asistente";
 
   return (
