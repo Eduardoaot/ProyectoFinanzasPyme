@@ -162,7 +162,16 @@ export interface Productos {
   productos: ProductoMetricas[];
   top_utilidad: ProductoMetricas[];
   bajo_margen: ProductoMetricas[];
-  inventario: { verde: number; amarillo: number; rojo: number; sin_movimiento: number; valor_total: number };
+  inventario: {
+    verde: number;
+    amarillo: number;
+    rojo: number;
+    sin_movimiento: number;
+    valor_total: number;
+    valor_a_precio_venta: number;
+    unidades_total: number;
+    compras_periodo: number;
+  };
 }
 
 export interface PuntoFlujoMensual {

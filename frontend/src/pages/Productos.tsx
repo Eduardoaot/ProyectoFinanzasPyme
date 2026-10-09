@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { EJE, Leyenda, SERIE, TooltipGrafica } from "../components/charts/comun";
 import { Aviso, Semaforo, Tarjeta, TarjetaCargando, TituloTarjeta } from "../components/ui/basicos";
+import { KpiCard } from "../components/ui/KpiCard";
 import { Pagina } from "../components/ui/Pagina";
 import { usePeriodo } from "../context/Periodo";
 import { useSesion } from "../context/Sesion";
@@ -11,7 +12,7 @@ import { useApi } from "../hooks/useApi";
 import { dinero, dineroCompacto, fechaCorta, numero, pct } from "../lib/formato";
 import type { ProductoMetricas, Productos as TipoProductos, Pronostico, Semaforo as TipoSemaforo } from "../lib/tipos";
 
-type Orden = "utilidad" | "ventas" | "margen_actual" | "dias_inventario" | "nombre";
+type Orden = "utilidad" | "ventas" | "margen_actual" | "valor_inventario" | "dias_inventario" | "nombre";
 
 const ETIQUETA_SEMAFORO: Record<TipoSemaforo, string> = { rojo: "Por agotarse", amarillo: "Vigilar", verde: "Suficiente", sin_movimiento: "Sin ventas" };
 
@@ -47,7 +48,8 @@ function DetalleProducto({ p, idEmpresa, cerrar }: { p: ProductoMetricas; idEmpr
               ["Costo", dinero(p.costo_promedio)],
               ["Te deja por " + p.unidad, dinero(p.precio_venta - p.costo_promedio)],
               ["Margen actual", pct(p.margen_actual)],
-              ["Existencia", `${numero(p.stock_actual)} ${p.unidad}`],
+              ["Existencia hoy", `${numero(p.stock_actual)} ${p.unidad}`],
+              ["Dinero en existencia", dinero(p.valor_inventario)],
               ["Vendes al día", numero(p.venta_diaria)],
             ].map(([k, v], i) => (
               <motion.div key={k} className="mini-kpi" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.04 }}>
@@ -147,6 +149,17 @@ export function Productos() {
         </div>
       ) : (
         <>
+          <div className="grid grid-kpi">
+            <KpiCard indice={0} etiqueta="Dinero en tu inventario hoy" valor={datos.inventario.valor_total} formato={dinero}
+              tecnico="Valor del inventario a costo: existencias de hoy × lo que te costó cada producto"
+              nota={`${numero(datos.inventario.unidades_total)} piezas en existencia`} />
+            <KpiCard indice={1} etiqueta="Si vendieras todo" valor={datos.inventario.valor_a_precio_venta} formato={dinero}
+              tecnico="Existencias de hoy × precio de venta"
+              nota={`te dejaría ${dinero(datos.inventario.valor_a_precio_venta - datos.inventario.valor_total)} más de lo que pagaste`} />
+            <KpiCard indice={2} etiqueta="Compraste de mercancía" valor={datos.inventario.compras_periodo} formato={dinero}
+              tecnico="Compras de producto registradas en el periodo elegido" nota={datos.periodo.etiqueta} />
+          </div>
+
           <div className="grid grid-2">
             <Tarjeta>
               <TituloTarjeta icono={Award} titulo="Top 5 por ganancia" sub={datos.periodo.etiqueta} />
@@ -164,7 +177,7 @@ export function Productos() {
               </div>
             </Tarjeta>
             <Tarjeta retraso={0.06}>
-              <TituloTarjeta icono={Boxes} titulo="Semáforo de inventario" sub={`Valor de tu inventario: ${dinero(datos.inventario.valor_total)}`} />
+              <TituloTarjeta icono={Boxes} titulo="Semáforo de inventario" sub="Con tus existencias de hoy" />
               <div className="grid" style={{ gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 10 }}>
                 {(["rojo", "amarillo", "verde", "sin_movimiento"] as TipoSemaforo[]).map((s, i) => (
                   <motion.button key={s} className="card interactiva centrado" style={{ padding: 16, cursor: "pointer", alignItems: "center", gap: 8,
@@ -214,7 +227,8 @@ export function Productos() {
                     <th className="der">Costo</th>
                     <Th campo="utilidad">Te dejó</Th>
                     <Th campo="margen_actual">Margen</Th>
-                    <th className="der">Existencia</th>
+                    <th className="der">Existencia hoy</th>
+                    <Th campo="valor_inventario">Dinero en existencia</Th>
                     <Th campo="dias_inventario" clase="cen">Inventario</Th>
                   </tr>
                 </thead>
@@ -239,6 +253,7 @@ export function Productos() {
                           </span>
                         </td>
                         <td className="der num">{numero(p.stock_actual)} <span className="mini muted">{p.unidad}</span></td>
+                        <td className="der num">{dinero(p.valor_inventario)}</td>
                         <td className="cen">
                           <Semaforo estado={p.semaforo} texto={p.dias_inventario !== null ? `${numero(p.dias_inventario)} d` : undefined} />
                         </td>

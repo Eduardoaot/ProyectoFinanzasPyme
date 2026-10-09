@@ -126,7 +126,10 @@ class ResumenInventario(BaseModel):
     amarillo: int
     rojo: int
     sin_movimiento: int
-    valor_total: float
+    valor_total: float          # existencias de hoy a costo: el dinero que tienes en mercancía
+    valor_a_precio_venta: float  # lo que entraría si vendieras todas las existencias de hoy
+    unidades_total: float
+    compras_periodo: float      # lo que gastaste en mercancía dentro del periodo elegido
 
 
 class Productos(BaseModel):

@@ -24,9 +24,36 @@ CORTE = date(2026, 9, 30)
     ("¿Cómo subo mi Excel?", "importar"),
     ("¿Cuánto pago de IVA?", "impuestos"),
     ("y en julio?", None),
+    ("Explícame en Saldo proyectado qué significa bola de nieve y abalancha", "concepto"),
+    ("¿Qué es el punto de equilibrio?", "concepto"),
+    ("¿Qué es el CAT?", "concepto"),
+    ("¿Me conviene avalancha o bola de nieve?", "deudas"),
+    ("¿Cuánto debo en mis tarjetas?", "deudas"),
+    ("Dime cuáles son los productos que crees que van a mejorar su % en 2 meses", "tendencia_productos"),
+    ("¿Qué productos se van a vender más?", "tendencia_productos"),
+    ("¿Qué es lo que más gasto?", "gastos"),          # "qué es" sin término del glosario no es concepto
 ])
 def test_intencion(pregunta, intencion):
     assert intencion_por_reglas(pregunta) == intencion
+
+
+def test_glosario_prefiere_el_termino_mas_largo():
+    from app.chat.glosario import buscar
+
+    assert [c.clave for c in buscar("que es el margen de seguridad")] == ["margen_seguridad"]
+    assert [c.clave for c in buscar("saldo proyectado bola de nieve y abalancha")] == ["saldo_proyectado", "bola_de_nieve", "avalancha"]
+    assert buscar("en que categoria esta") == []          # "cat" solo como palabra completa
+
+
+@pytest.mark.parametrize("pregunta, meses", [
+    ("¿qué productos van a mejorar en 2 meses?", 2), ("en tres meses", 3), ("el próximo mes", 1),
+    ("este trimestre", 3), ("¿qué productos van a mejorar?", 2), ("en 18 meses", 12),
+    ("¿qué se va a vender más en diciembre?", 3), ("¿y en febrero?", 5), ("en septiembre", 12),
+])
+def test_horizonte_de_la_pregunta(pregunta, meses):
+    from app.chat.hechos_avanzados import horizonte_meses
+
+    assert horizonte_meses(pregunta, date(2026, 9, 1)) == meses
 
 
 @pytest.mark.parametrize("pregunta, desde, hasta", [

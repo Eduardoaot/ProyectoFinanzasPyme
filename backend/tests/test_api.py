@@ -100,6 +100,17 @@ def test_impuestos_del_estado_de_resultados_cuadran_con_el_apartado_de_impuestos
     assert er["iva"] == pytest.approx(sum(m["iva_a_pagar"] for m in trimestre), abs=0.02)
 
 
+def test_valor_del_inventario_usa_existencias_de_hoy(cliente, ana):
+    inv_mes = cliente.get("/api/empresas/1/productos", headers=ana, params={"desde": "2026-09-01", "hasta": "2026-09-30"}).json()
+    inv_anio = cliente.get("/api/empresas/1/productos", headers=ana, params=PERIODO_CASO_BASE).json()
+    p, i = inv_mes["productos"], inv_mes["inventario"]
+    assert i["valor_total"] == pytest.approx(sum(x["stock_actual"] * x["costo_promedio"] for x in p), abs=0.05)
+    assert i["valor_a_precio_venta"] == pytest.approx(sum(x["stock_actual"] * x["precio_venta"] for x in p), abs=0.05)
+    # Las existencias son las de hoy: no cambian con el periodo; las compras sí.
+    assert inv_anio["inventario"]["valor_total"] == i["valor_total"]
+    assert inv_anio["inventario"]["compras_periodo"] > i["compras_periodo"] > 0
+
+
 def test_dataset_minimo_700_registros():
     from sqlalchemy import func, select
 
@@ -186,6 +197,69 @@ def test_chat_financiamiento_lleva_aviso(cliente, ana, llm):
     r = cliente.post("/api/empresas/1/chat", headers=ana, json={"mensaje": "¿Debería pedir un préstamo?"}).json()
     assert r["intencion"] == "financiamiento"
     assert "no constituye asesoría financiera" in r["answer"]
+
+
+def _preguntar(cliente, headers, mensaje: str, empresa: int = 1) -> dict:
+    r = cliente.post(f"/api/empresas/{empresa}/chat", headers=headers, json={"mensaje": mensaje})
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def test_chat_explica_conceptos_con_las_deudas_reales(cliente, lupita, llm):
+    r = _preguntar(cliente, lupita, "Explícame en Saldo proyectado qué significa bola de nieve y abalancha", empresa=2)
+    assert r["intencion"] == "concepto"
+    for texto in ("**Saldo proyectado**", "**Bola de nieve**", "**Avalancha**", "saldo más pequeño", "tasa de interés más alta"):
+        assert texto in r["answer"]
+    assert "Con tus deudas" in r["answer"] or "No tienes deudas registradas" in r["answer"]
+    assert "no constituye asesoría financiera" in r["answer"]
+
+
+def test_chat_concepto_sin_datos_del_negocio(cliente, ana, llm):
+    r = _preguntar(cliente, ana, "¿Qué es el stock de seguridad?")
+    assert r["intencion"] == "concepto"
+    assert "1.65" in r["answer"] and "Dónde lo ves" in r["answer"]
+
+
+def test_chat_productos_que_van_a_mejorar(cliente, lupita, llm):
+    r = _preguntar(cliente, lupita, "Dime cuáles son los productos que crees que van a mejorar su % en 2 meses", empresa=2)
+    assert r["intencion"] == "tendencia_productos"
+    assert r["datos"]["horizonte_meses"] == 2
+    assert "Podrían mejorar su margen en 2 meses" in r["answer"] and "Cómo lo calculé" in r["answer"]
+
+
+def test_chat_tendencia_de_ventas_por_producto(cliente, ana, llm):
+    r = _preguntar(cliente, ana, "¿Qué productos se van a vender más en los próximos 3 meses?")
+    assert r["intencion"] == "tendencia_productos"
+    assert "Ventas en unidades en diciembre 2026" in r["answer"]
+
+
+def test_chat_impuestos_usa_el_calculo_real(cliente, ana, llm):
+    r = _preguntar(cliente, ana, "¿Cuánto pago de IVA?")
+    assert r["intencion"] == "impuestos"
+    assert "Fecha límite" in r["answer"] and "siguiente fase" not in r["answer"]
+
+
+def test_chat_pronostico_usa_el_de_proyecciones(cliente, ana, llm):
+    r = _preguntar(cliente, ana, "¿Cuánto voy a vender el próximo mes?")
+    assert r["intencion"] == "pronostico"
+    assert "Ventas estimadas" in r["answer"] and "rango probable" in r["answer"]
+
+
+def test_chat_deudas(cliente, lupita, llm):
+    r = _preguntar(cliente, lupita, "¿Cuánto debo?", empresa=2)
+    assert r["intencion"] == "deudas"
+    assert "Debes en total" in r["answer"] or "No tienes deudas" in r["answer"]
+
+
+def test_chat_admite_cuando_no_sabe(cliente, ana, llm):
+    r = _preguntar(cliente, ana, "¿Quién ganó el partido de ayer?")
+    assert r["intencion"] == "fuera_de_alcance"
+    assert "todavía no la sé responder" in r["answer"]
+
+
+def test_analisis_completo_incluye_impuestos(cliente, ana, llm):
+    r = _preguntar(cliente, ana, "Hazme un análisis completo")
+    assert "Impuestos estimados" in r["answer"] and "Después de impuestos" in r["answer"]
 
 
 def test_chat_stream(cliente, ana, llm):

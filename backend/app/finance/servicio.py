@@ -277,6 +277,9 @@ def productos(conn: Connection, id_empresa: int, desde: date, hasta: date, umbra
         verde=sum(p.semaforo == "verde" for p in lista), amarillo=sum(p.semaforo == "amarillo" for p in lista),
         rojo=sum(p.semaforo == "rojo" for p in lista), sin_movimiento=sum(p.semaforo == "sin_movimiento" for p in lista),
         valor_total=round(sum(p.valor_inventario for p in lista), 2),
+        valor_a_precio_venta=float(f.redondear(sum((p["stock_actual"] * p["precio_venta"] for p in catalogo), CERO))),
+        unidades_total=float(sum((p["stock_actual"] for p in catalogo), CERO)),
+        compras_periodo=float(f.redondear(sum((c["monto"] for c in q.compras_diarias(conn, id_empresa, desde, hasta)), CERO))),
     )
     return Productos(
         periodo=_periodo(desde, hasta), productos=lista, top_utilidad=con_ventas[:5],

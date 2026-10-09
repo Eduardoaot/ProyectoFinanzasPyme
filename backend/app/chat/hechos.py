@@ -6,16 +6,15 @@ corto para el LLM y un texto de respaldo por si Ollama no está disponible.
 
 import math
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date
 
 from sqlalchemy import Connection
 
 from app.alerts.reglas import Alerta, evaluar, umbrales_empresa
-from app.finance import consultas as q
 from app.finance import servicio
 from app.finance.formato import dinero, numero, pct, pct_cambio, unidades
 from app.finance.periodos import describir_periodo
-from app.forecasting.servicio import completar_dias, get_forecast_service
+from app.impuestos import servicio as impuestos_srv
 
 EMOJI = {"rojo": "🔴", "amarillo": "🟡", "verde": "🟢", "sin_movimiento": "⚪"}
 AVISO = "Orientación general, no constituye asesoría financiera, contable ni fiscal."
@@ -30,6 +29,8 @@ class Contexto:
     desde: date
     hasta: date
     corte: date
+    mensaje: str = ""
+    periodo_explicito: bool = False
 
     @property
     def periodo(self) -> str:
@@ -48,6 +49,7 @@ class Hechos:
     usa_llm: bool = True
     aviso: bool = False
     enfoque: str = ""
+    oraciones: int = 3
 
 
 def _alertas(ctx: Contexto) -> list[Alerta]:
@@ -69,13 +71,16 @@ def saludo(ctx: Contexto) -> Hechos:
         secciones=[("Puedo ayudarte con", [
             "¿Estoy ganando? — tu utilidad y margen de cualquier mes o año.",
             "¿Qué producto me deja más? — productos más y menos rentables.",
+            "¿Qué productos van a mejorar su margen en 2 meses? — hacia dónde va cada producto.",
             "¿Dónde gasto demasiado? — tus gastos por categoría.",
-            "¿Me va a alcanzar el efectivo? — flujo y proyección a 30 días.",
-            "Inventario por agotarse, punto de equilibrio, alertas y un análisis completo.",
+            "¿Me va a alcanzar el efectivo? — flujo y proyección.",
+            "¿Cuánto voy a vender el próximo mes? — pronóstico con rango pesimista y optimista.",
+            "Tus deudas, tus impuestos, inventario por agotarse, punto de equilibrio y alertas.",
+            "¿Qué significa…? — te explico términos como avalancha, bola de nieve, margen o punto de reorden.",
         ])],
         respaldo="Pregúntame con tus palabras o con el micrófono. Todas las cifras las calcula el sistema con tus "
                  "datos; yo te las explico.",
-        sugerencias=["Hazme un análisis completo", "¿Estoy ganando este mes?", "¿Qué productos se me van a agotar?"],
+        sugerencias=["Hazme un análisis completo", "¿Qué productos van a mejorar su margen?", "¿Qué es la avalancha?"],
         usa_llm=False,
     )
 
@@ -95,21 +100,6 @@ def importar(ctx: Contexto) -> Hechos:
                  "a qué corresponde cada una y tú decides. Nada se guarda sin tu confirmación, y puedes deshacer una carga.",
         sugerencias=["¿Qué columnas necesita el archivo de ventas?", "Hazme un análisis completo"],
         usa_llm=False,
-    )
-
-
-def impuestos(ctx: Contexto) -> Hechos:
-    k = servicio.kpis(ctx.conn, ctx.id_empresa, ctx.desde, ctx.hasta)
-    return Hechos(
-        titulo="Impuestos",
-        secciones=[("Lo que sí puedo decirte", [
-            f"Utilidad antes de impuestos en {ctx.periodo}: **{dinero(k.utilidad)}**.",
-            "El cálculo de ISR e IVA según tu régimen (RESICO, Actividad Empresarial) llegará en la siguiente fase.",
-        ])],
-        respaldo="Por ahora no calculo impuestos, así que tu utilidad todavía no los descuenta. Para tus declaraciones, "
-                 "apóyate en tu contador.",
-        sugerencias=["¿Estoy ganando este mes?", "¿Cuál es mi punto de equilibrio?"],
-        usa_llm=False, aviso=True,
     )
 
 
@@ -409,31 +399,6 @@ def comparar(ctx: Contexto) -> Hechos:
     )
 
 
-def pronostico(ctx: Contexto) -> Hechos:
-    servicio_f = get_forecast_service()
-    desde = ctx.corte - timedelta(days=89)
-    diarias = q.ventas_diarias(ctx.conn, ctx.id_empresa, desde, ctx.corte)
-    serie = completar_dias([(d["fecha"], d["ingreso"]) for d in diarias], desde, ctx.corte)
-    acumulado = servicio_f.acumulado(serie, 30)
-    lineas = []
-    if acumulado:
-        final = acumulado[-1]
-        lineas = [f"Ventas esperadas en los próximos 30 días: **{dinero(final.valor)}**",
-                  f"Rango probable: {dinero(final.inferior)} a {dinero(final.superior)}",
-                  f"Basado en el promedio de los últimos 30 días al {ctx.corte:%d/%m/%Y}"]
-    proy = servicio.proyeccion(ctx.conn, ctx.id_empresa)
-    secciones = [("Ventas", lineas)]
-    if proy:
-        secciones.append(("Efectivo", _lineas_proyeccion(proy)))
-    return Hechos(
-        titulo="Proyección a 30 días", secciones=secciones,
-        respaldo="Es una proyección simple (promedio móvil): no considera temporadas como el regreso a clases o diciembre.",
-        datos={"metodo": servicio_f.metodo},
-        sugerencias=["¿Qué se me va a agotar?", "¿Me va a alcanzar el efectivo?"],
-        enfoque="Aclara que es una estimación simple que no considera temporadas.",
-    )
-
-
 def analisis_completo(ctx: Contexto) -> Hechos:
     fz = servicio.finanzas(ctx.conn, ctx.id_empresa, ctx.desde, ctx.hasta)
     fl = servicio.flujo(ctx.conn, ctx.id_empresa, ctx.desde, ctx.hasta)
@@ -441,6 +406,7 @@ def analisis_completo(ctx: Contexto) -> Hechos:
     k = servicio.kpis(ctx.conn, ctx.id_empresa, ctx.desde, ctx.hasta)
     lista = _alertas(ctx)
     pe = fz.punto_equilibrio
+    fiscal = impuestos_srv.impuestos_del_periodo(ctx.conn, ctx.id_empresa, ctx.desde, ctx.hasta)
 
     costos = [f"Costo total de la mercancía vendida: **{dinero(k.costo_ventas)}**"]
     if len(fz.mensual) <= 12:
@@ -460,7 +426,8 @@ def analisis_completo(ctx: Contexto) -> Hechos:
         ("Gastos de operación", gastos_l),
         ("Utilidad", [f"Utilidad bruta: {dinero(k.utilidad_bruta)}",
                       f"Utilidad antes de impuestos: **{dinero(k.utilidad)}**",
-                      "Impuestos: no calculados todavía (próxima fase)"]),
+                      f"Impuestos estimados (ISR {dinero(fiscal['isr'])} + IVA {dinero(fiscal['iva'])}): {dinero(fiscal['total'])}",
+                      f"**Después de impuestos: {dinero(k.utilidad - fiscal['total'])}**"]),
         ("Margen", [f"Margen bruto: {pct(k.margen_bruto)}", f"Margen de utilidad: **{pct(k.margen)}**"]),
         ("Flujo de efectivo", flujo_l),
         ("Productos más rentables", [f"{x.nombre}: {dinero(x.utilidad)} de ganancia ({unidades(x.unidades, x.unidad)}, margen {pct(x.margen)})"
@@ -491,12 +458,13 @@ def analisis_completo(ctx: Contexto) -> Hechos:
         sugerencias=["¿Qué se me va a agotar?", "¿Me va a alcanzar el efectivo?", "¿Debería pedir un préstamo?"],
         aviso=True,
         enfoque="Da un diagnóstico general en 3 o 4 oraciones: qué va bien, qué preocupa y qué hacer primero.",
+        oraciones=4,
     )
 
 
 CONSTRUCTORES = {
-    "saludo": saludo, "importar": importar, "impuestos": impuestos, "analisis_completo": analisis_completo,
+    "saludo": saludo, "importar": importar, "analisis_completo": analisis_completo,
     "ganancia": ganancia, "ventas": ventas, "productos_top": productos_top, "productos_bajo": productos_bajo,
     "inventario": inventario, "gastos": gastos, "flujo": flujo, "equilibrio": equilibrio, "alertas": alertas,
-    "financiamiento": financiamiento, "comparar": comparar, "pronostico": pronostico,
+    "financiamiento": financiamiento, "comparar": comparar,
 }

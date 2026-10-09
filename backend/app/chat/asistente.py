@@ -10,7 +10,8 @@ from datetime import date
 from pydantic import BaseModel
 from sqlalchemy import Connection
 
-from app.chat.hechos import AVISO, CONSTRUCTORES, Contexto, Hechos
+from app.chat.hechos import AVISO, Contexto, Hechos
+from app.chat.hechos_avanzados import CONSTRUCTORES
 from app.chat.intenciones import detectar_periodo, intencion_por_llm, intencion_por_reglas
 from app.finance import consultas as q
 from app.finance.periodos import describir_periodo
@@ -48,11 +49,13 @@ def _contexto(conn: Connection, id_empresa: int, mensaje: str, desde: date | Non
         if intencion_anterior in CONSTRUCTORES and periodo.explicito:
             intencion = intencion_anterior
         else:
-            intencion = intencion_por_llm(mensaje) or "ganancia"
+            # Mejor admitir que no sabe que contestar otra cosa (antes caía en "ganancia").
+            intencion = intencion_por_llm(mensaje) or "fuera_de_alcance"
     if intencion == "analisis_completo" and not periodo.explicito:
         periodo.desde, periodo.hasta = date(corte.year, 1, 1), corte   # en lo que va del año
     ctx = Contexto(conn=conn, id_empresa=id_empresa, negocio=emp.get("nombre_negocio", "tu negocio"),
-                   giro=emp.get("giro", ""), desde=periodo.desde, hasta=periodo.hasta, corte=corte)
+                   giro=emp.get("giro", ""), desde=periodo.desde, hasta=periodo.hasta, corte=corte,
+                   mensaje=mensaje, periodo_explicito=periodo.explicito)
     return intencion, ctx, periodo.explicito
 
 
@@ -78,8 +81,7 @@ def _markdown_cierre(h: Hechos, narrativa: str) -> str:
 def _prompt(h: Hechos, ctx: Contexto, mensaje: str) -> tuple[str, str]:
     lineas = h.para_llm or [linea for _, ls in h.secciones for linea in ls]
     datos = "\n".join(f"- {linea.replace('**', '')}" for linea in lineas)
-    oraciones = 4 if h.titulo.startswith("Análisis") else 3
-    sistema = SISTEMA.format(negocio=ctx.negocio, giro=ctx.giro, oraciones=oraciones)
+    sistema = SISTEMA.format(negocio=ctx.negocio, giro=ctx.giro, oraciones=h.oraciones)
     usuario = (f"PREGUNTA: {mensaje}\nPERIODO: {ctx.periodo}\nDATOS:\n{datos}\n"
                f"CONTEXTO: {h.respaldo}\nENFOQUE: {h.enfoque}")
     return sistema, usuario

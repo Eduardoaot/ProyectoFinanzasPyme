@@ -16,7 +16,8 @@ import { NavLink } from "react-router-dom";
 import { useSesion } from "../../context/Sesion";
 import { Logo } from "../ui/basicos";
 
-export const MODULOS: { ruta: string; texto: string; icono: LucideIcon; pregunta: string }[] = [
+// Sin `export`: un archivo de componente que exporta constantes rompe el Fast Refresh de Vite.
+const MODULOS: { ruta: string; texto: string; icono: LucideIcon; pregunta: string }[] = [
   { ruta: "/", texto: "Resumen", icono: LayoutDashboard, pregunta: "Ventas, ganancia y margen" },
   { ruta: "/finanzas", texto: "Finanzas", icono: ChartColumnBig, pregunta: "Estado de resultados y gastos" },
   { ruta: "/productos", texto: "Productos", icono: Package, pregunta: "Ganancia e inventario" },
@@ -24,13 +25,13 @@ export const MODULOS: { ruta: string; texto: string; icono: LucideIcon; pregunta
   { ruta: "/alertas", texto: "Alertas", icono: Bell, pregunta: "Avisos por urgencia" },
 ];
 
-export const PLANEACION: { ruta: string; texto: string; icono: LucideIcon; pregunta: string }[] = [
+const PLANEACION: { ruta: string; texto: string; icono: LucideIcon; pregunta: string }[] = [
   { ruta: "/proyecciones", texto: "Proyecciones y consejos", icono: TrendingUp, pregunta: "Pronóstico, compras y ahorro" },
   { ruta: "/impuestos", texto: "Impuestos", icono: Landmark, pregunta: "ISR, IVA y deducciones" },
   { ruta: "/deudas", texto: "Deudas", icono: CreditCard, pregunta: "Saldos, pagos y plan" },
 ];
 
-export const HERRAMIENTAS = [
+const HERRAMIENTAS = [
   { ruta: "/asistente", texto: "Asistente Clara", icono: Bot },
   { ruta: "/importar", texto: "Importar datos", icono: FileSpreadsheet },
 ];

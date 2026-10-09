@@ -160,6 +160,34 @@ def precios_por_producto(conn: Connection, id_empresa: int, desde: date, hasta: 
     return {f["id_producto"]: {"precio": dec(f["precio"]), "costo": dec(f["costo"])} for f in filas}
 
 
+def ventas_productos_diarias(conn: Connection, id_empresa: int, desde: date, hasta: date) -> list[dict]:
+    """Unidades, ingreso y costo por producto y día (vista v_ventas_diarias)."""
+    filas = conn.execute(
+        text("""
+            SELECT id_producto, fecha, unidades, ingreso, costo FROM v_ventas_diarias
+            WHERE id_empresa = :e AND fecha >= :desde AND fecha < :hasta_excl
+        """),
+        {"e": id_empresa, **_rango(desde, hasta)},
+    ).mappings()
+    return [{"id_producto": f["id_producto"], "fecha": a_fecha(f["fecha"]), "unidades": dec(f["unidades"]),
+             "ingreso": dec(f["ingreso"]), "costo": dec(f["costo"])} for f in filas]
+
+
+def costo_compras_por_producto(conn: Connection, id_empresa: int, desde: date, hasta: date) -> dict[int, Decimal]:
+    """Costo unitario promedio ponderado de las compras de cada producto en el periodo."""
+    filas = conn.execute(
+        text("""
+            SELECT id_producto, SUM(cantidad * costo_unitario) / SUM(cantidad) AS costo
+            FROM compras_producto
+            WHERE id_empresa = :e AND fecha >= :desde AND fecha < :hasta_excl
+            GROUP BY id_producto
+            HAVING SUM(cantidad) > 0
+        """),
+        {"e": id_empresa, **_rango(desde, hasta)},
+    ).mappings()
+    return {f["id_producto"]: dec(f["costo"]) for f in filas}
+
+
 def serie_producto(conn: Connection, id_empresa: int, id_producto: int, desde: date, hasta: date) -> list[dict]:
     """Ventas diarias de un producto desde la vista v_ventas_diarias (lista para series de tiempo)."""
     filas = conn.execute(

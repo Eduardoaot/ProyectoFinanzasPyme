@@ -90,6 +90,7 @@
   resize: none;
   min-height: 44px;
   max-height: 120px;
+  overflow-y: hidden;
   padding: 11px 14px;
   border-radius: 14px;
   border: 1px solid var(--line);
