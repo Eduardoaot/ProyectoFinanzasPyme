@@ -42,6 +42,11 @@ export function ProveedorChat({ children }: { children: ReactNode }) {
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }
 
+/** Igual que useChat, pero devuelve null fuera del proveedor (componentes que también viven en el modo sencillo o en pruebas). */
+export function useChatOpcional() {
+  return useContext(Contexto);
+}
+
 export function useChat() {
   const v = useContext(Contexto);
   if (!v) throw new Error("useChat fuera de ProveedorChat");

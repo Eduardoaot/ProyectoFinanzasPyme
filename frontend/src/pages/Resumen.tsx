@@ -1,11 +1,12 @@
-import { motion } from "framer-motion";
-import { ArrowRight, FileSpreadsheet, Sparkles } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, FileSpreadsheet, KeyRound, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { EJE, SERIE, TooltipGrafica } from "../components/charts/comun";
 import { TarjetaAlerta } from "../components/AlertaTarjeta";
 import { Aviso, Ayuda, Cambio, EstadoVacio, NumeroAnimado, Segmentado, Tarjeta, TarjetaCargando, TituloTarjeta } from "../components/ui/basicos";
+import { BotonClara, Emergente } from "../components/ui/Emergente";
 import { KpiCard, type PuntoSpark } from "../components/ui/KpiCard";
 import { Pagina } from "../components/ui/Pagina";
 import { useChat } from "../context/Chat";
@@ -39,6 +40,17 @@ function valorDato(d: DatoClave): string {
   if (d.formato === "porcentaje") return pct(Number(d.valor));
   if (d.formato === "numero") return numero(Number(d.valor));
   return String(d.valor);
+}
+
+/** Detalle de un "dato clave": la cifra, qué significa y un acceso a Clara. */
+function DetalleDato({ d, periodo, onCerrar }: { d: DatoClave; periodo?: string; onCerrar: () => void }) {
+  return (
+    <Emergente ancho="chico" icono={KeyRound} titulo={d.etiqueta} subtitulo={periodo} onCerrar={onCerrar}
+      pie={<BotonClara pregunta={`¿Qué significa ${d.etiqueta.toLowerCase()}?`} antes={onCerrar} />}>
+      <div className="emergente-cifra"><strong>{valorDato(d)}</strong></div>
+      {d.ayuda && <p className="emergente-explica"><strong>¿Qué es?</strong> {d.ayuda}</p>}
+    </Emergente>
+  );
 }
 
 /** Bloque principal: la cifra grande, su cambio y la gráfica responden al filtro de
@@ -106,6 +118,7 @@ export function Resumen() {
   const listo = Boolean(id && empresa?.tiene_datos && params.desde);
   const resumen = useApi<TipoResumen>(listo ? `/empresas/${id}/resumen` : null, params);
   const alertas = useApi<Alerta[]>(listo ? `/empresas/${id}/alertas` : null, params);
+  const [dato, setDato] = useState<DatoClave | null>(null);
 
   if (empresa && !empresa.tiene_datos) {
     return (
@@ -146,11 +159,14 @@ export function Resumen() {
         </Tarjeta>
 
         <Tarjeta retraso={0.08}>
-          <TituloTarjeta titulo="Datos clave" sub={r?.periodo.etiqueta} />
+          <TituloTarjeta titulo="Datos clave" sub={r ? `${r.periodo.etiqueta} · toca un dato para ver qué significa` : undefined} />
           <div className="datos-clave">
             {(r?.datos_clave ?? Array.from({ length: 8 }, () => null)).map((d, i) =>
               d ? (
-                <motion.div className="dato" key={d.etiqueta} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.04 }}>
+                <motion.div className="dato picable" key={d.etiqueta} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + i * 0.04 }}
+                  role="button" tabIndex={0} aria-haspopup="dialog" aria-label={`${d.etiqueta}: ${valorDato(d)}. Ver qué significa`}
+                  onClick={(e) => !(e.target as HTMLElement).closest(".ayuda") && setDato(d)}
+                  onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setDato(d); } }}>
                   <span className="k">{d.etiqueta}{d.ayuda && <Ayuda texto={d.ayuda} />}</span>
                   <span className="v num">{valorDato(d)}</span>
                 </motion.div>
@@ -165,18 +181,18 @@ export function Resumen() {
       {k && ka && v ? (
         <div className="grid grid-kpi">
           <KpiCard indice={0} etiqueta="Vendiste" tecnico="Ventas netas" valor={k.ventas} formato={enteros}
-            variacion={v.ventas} comparacion={vs(ka.ventas)} serie={serie("ventas")} color={SERIE.ventas} />
+            variacion={v.ventas} comparacion={vs(ka.ventas)} serie={serie("ventas")} color={SERIE.ventas} pregunta="¿Cuánto vendí?" />
           <KpiCard indice={1} etiqueta="Costo de mercancía" tecnico="Costo de ventas: lo que te costó la mercancía que vendiste" valor={k.costo_ventas} formato={enteros}
-            variacion={v.costo_ventas} invertido comparacion={vs(ka.costo_ventas)} serie={serie("costo")} color={SERIE.gastos} />
+            variacion={v.costo_ventas} invertido comparacion={vs(ka.costo_ventas)} serie={serie("costo")} color={SERIE.gastos} pregunta="¿Qué es el costo de ventas?" />
           <KpiCard indice={2} etiqueta="Ganancia bruta" tecnico="Utilidad bruta = ventas − costo de ventas" valor={k.utilidad_bruta} formato={enteros}
-            variacion={v.utilidad_bruta} comparacion={vs(ka.utilidad_bruta)} serie={serie("utilidad_bruta")} color={SERIE.utilidad} />
+            variacion={v.utilidad_bruta} comparacion={vs(ka.utilidad_bruta)} serie={serie("utilidad_bruta")} color={SERIE.utilidad} pregunta="¿Qué es la utilidad bruta?" />
           <KpiCard indice={3} etiqueta="Gastos del negocio" tecnico="Gastos de operación (fijos + variables)" valor={k.gastos_operacion} formato={enteros}
-            variacion={v.gastos_operacion} invertido comparacion={vs(ka.gastos_operacion)} serie={serie("gastos")} color={SERIE.gastos} />
+            variacion={v.gastos_operacion} invertido comparacion={vs(ka.gastos_operacion)} serie={serie("gastos")} color={SERIE.gastos} pregunta="¿En qué gasto más?" />
           <KpiCard indice={4} etiqueta="Lo que ganaste" tecnico="Utilidad (antes de impuestos)" valor={k.utilidad} formato={enteros}
-            variacion={v.utilidad} comparacion={vs(ka.utilidad)} serie={serie("utilidad")} color={SERIE.utilidad} />
+            variacion={v.utilidad} comparacion={vs(ka.utilidad)} serie={serie("utilidad")} color={SERIE.utilidad} pregunta="¿Cuánto gané?" />
           <KpiCard indice={5} etiqueta="Margen" tecnico="Margen = utilidad / ventas" valor={k.margen === null ? null : k.margen * 100}
             formato={(n) => `${n.toFixed(1)}%`} puntos={v.margen_pp} comparacion={vs(ka.margen, (n) => pct(n))}
-            nota={k.margen !== null ? `de cada $100 te quedan ${dinero(k.margen * 100)}` : undefined} />
+            nota={k.margen !== null ? `de cada $100 te quedan ${dinero(k.margen * 100)}` : undefined} pregunta="¿Qué es el margen?" />
         </div>
       ) : (
         <div className="grid grid-kpi">{Array.from({ length: 6 }, (_, i) => <TarjetaCargando key={i} alto={60} />)}</div>
@@ -191,6 +207,8 @@ export function Resumen() {
           {alertas.datos?.length === 0 && <p className="muted pequeno">Todo en orden: no hay alertas en este periodo.</p>}
         </div>
       </Tarjeta>
+
+      <AnimatePresence>{dato && <DetalleDato d={dato} periodo={r?.periodo.etiqueta} onCerrar={() => setDato(null)} />}</AnimatePresence>
     </Pagina>
   );
 }

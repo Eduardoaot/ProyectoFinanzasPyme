@@ -99,3 +99,9 @@ export function ultimosMeses(hasta: string, n: number, primer: string): { desde:
   const desde = iso(inicio.getFullYear(), inicio.getMonth() + 1, 1);
   return { desde: desde < primer ? primer.slice(0, 8) + "01" : desde, hasta };
 }
+
+/** "2026-09" → "septiembre 2026" (para preguntarle a Clara por un mes concreto). */
+export function mesLargo(periodo: string): string {
+  const [a, m] = periodo.split("-").map(Number);
+  return m >= 1 && m <= 12 ? `${MESES[m - 1].toLowerCase()} ${a}` : periodo;
+}

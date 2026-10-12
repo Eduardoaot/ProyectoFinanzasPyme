@@ -8,6 +8,7 @@ import "./styles/layout.css";
 import "./styles/chat.css";
 import "./styles/paginas.css";
 import "./styles/sencillo.css";
+import "./styles/emergente.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

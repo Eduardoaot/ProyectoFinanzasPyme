@@ -81,3 +81,11 @@ export function Leyenda({ items }: { items: { nombre: string; color: string; tip
     </div>
   );
 }
+
+/** Índice del punto que se picó en una gráfica (onClick del chart), o null si se picó fuera de los datos. */
+export function indicePicado(e: { activeTooltipIndex?: unknown } | null | undefined): number | null {
+  const crudo = e?.activeTooltipIndex;
+  if (crudo === undefined || crudo === null || crudo === "") return null;
+  const i = Number(crudo);
+  return Number.isInteger(i) && i >= 0 ? i : null;
+}

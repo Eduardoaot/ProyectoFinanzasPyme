@@ -231,18 +231,18 @@ export function Deudas() {
       ) : (
         <>
           <div className="grid grid-kpi">
-            <KpiCard indice={0} etiqueta="Deuda total" tecnico={`Suma de saldos. ${dinero(kp.deuda_corto_plazo, false)} se paga en los próximos 12 meses.`} valor={kp.deuda_total}
+            <KpiCard indice={0} etiqueta="Deuda total" pregunta="¿Cuánto debo en total?" tecnico={`Suma de saldos. ${dinero(kp.deuda_corto_plazo, false)} se paga en los próximos 12 meses.`} valor={kp.deuda_total}
               formato={(n) => dinero(Math.round(n), false)} nota={`${dineroCompacto(kp.deuda_corto_plazo)} en 12 meses`} />
-            <KpiCard indice={1} etiqueta="Pago mensual" tecnico={`Pago mensual total de todas tus deudas, con comisiones. Próximos 7 días: ${dinero(kp.proximos_pagos["7_dias"], false)}.`}
+            <KpiCard indice={1} etiqueta="Pago mensual" pregunta="¿Cuánto pago de deudas al mes?" tecnico={`Pago mensual total de todas tus deudas, con comisiones. Próximos 7 días: ${dinero(kp.proximos_pagos["7_dias"], false)}.`}
               valor={kp.pago_mensual_total} formato={(n) => dinero(Math.round(n), false)} nota={`${dineroCompacto(kp.proximos_pagos["30_dias"])} en 30 días`} />
-            <KpiCard indice={2} etiqueta="Intereses al mes" tecnico="Costo mensual de la deuda = intereses + IVA de intereses + comisiones" valor={kp.costo_mensual} formato={(n) => dinero(Math.round(n), false)} nota="con IVA y comisiones" />
-            <KpiCard indice={3} etiqueta="Ventas para deudas" tecnico="Pago mensual total / ventas mensuales proyectadas. Sano: menos de 15%; atención: 15% a 30%; alto: más de 30%."
+            <KpiCard indice={2} etiqueta="Intereses al mes" pregunta="¿Qué son los intereses?" tecnico="Costo mensual de la deuda = intereses + IVA de intereses + comisiones" valor={kp.costo_mensual} formato={(n) => dinero(Math.round(n), false)} nota="con IVA y comisiones" />
+            <KpiCard indice={3} etiqueta="Ventas para deudas" pregunta="¿Cuál deuda pago primero?" tecnico="Pago mensual total / ventas mensuales proyectadas. Sano: menos de 15%; atención: 15% a 30%; alto: más de 30%."
               valor={kp.pct_ventas === null ? null : kp.pct_ventas * 100} formato={(n) => `${n.toFixed(0)}%`}
               nota={kp.semaforo_pct_ventas === "verde" ? "sano" : kp.semaforo_pct_ventas === "amarillo" ? "atención" : "alto"} />
-            <KpiCard indice={4} etiqueta="Cobertura de pagos" tecnico="Utilidad mensual / pagos de deuda (DSCR). Sano: 1.25x o más; justo: 1.0x a 1.25x; menos de 1x no alcanza."
+            <KpiCard indice={4} etiqueta="Cobertura de pagos" pregunta="¿Cuál deuda pago primero?" tecnico="Utilidad mensual / pagos de deuda (DSCR). Sano: 1.25x o más; justo: 1.0x a 1.25x; menos de 1x no alcanza."
               valor={kp.dscr} formato={(n) => `${n.toFixed(2)}x`}
               nota={kp.semaforo_dscr === "verde" ? "sano" : kp.semaforo_dscr === "amarillo" ? "justo" : "no alcanza"} />
-            <KpiCard indice={5} etiqueta="Sin deudas en" tecnico="Fecha en que terminas de pagar todo con el plan actual" valor={kp.fecha_libre ? new Date(kp.fecha_libre).getFullYear() : null} formato={(n) => String(Math.round(n))}
+            <KpiCard indice={5} etiqueta="Sin deudas en" pregunta="¿Cuándo termino de pagar mis deudas?" tecnico="Fecha en que terminas de pagar todo con el plan actual" valor={kp.fecha_libre ? new Date(kp.fecha_libre).getFullYear() : null} formato={(n) => String(Math.round(n))}
               nota={kp.fecha_libre ? fechaCorta(kp.fecha_libre) : "no se liquida"} />
           </div>
 

@@ -1,15 +1,39 @@
-import { motion } from "framer-motion";
-import { ArrowDownLeft, ArrowUpRight, CalendarClock, ChartColumnBig, Info, Wallet } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowDownLeft, ArrowUpRight, CalendarClock, CalendarDays, ChartColumnBig, Info, MousePointerClick, Wallet } from "lucide-react";
+import { useState } from "react";
 import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { EJE, Leyenda, SERIE, TooltipGrafica } from "../components/charts/comun";
+import { EJE, indicePicado, Leyenda, SERIE, TooltipGrafica } from "../components/charts/comun";
 import { Aviso, Semaforo, Tarjeta, TarjetaCargando, TituloTarjeta } from "../components/ui/basicos";
+import { BotonClara, Emergente, ListaCifras } from "../components/ui/Emergente";
 import { KpiCard } from "../components/ui/KpiCard";
 import { Pagina } from "../components/ui/Pagina";
 import { usePeriodo } from "../context/Periodo";
 import { useSesion } from "../context/Sesion";
 import { useApi } from "../hooks/useApi";
 import { dinero, dineroCompacto, fechaCorta, fechaLarga } from "../lib/formato";
-import type { Flujo as TipoFlujo } from "../lib/tipos";
+import { mesLargo } from "../lib/periodos";
+import type { Flujo as TipoFlujo, PuntoFlujoMensual } from "../lib/tipos";
+
+/** Detalle de un mes al picarlo en "Entradas vs. salidas". */
+function DetalleMesFlujo({ m, onCerrar }: { m: PuntoFlujoMensual; onCerrar: () => void }) {
+  return (
+    <Emergente ancho="chico" icono={CalendarDays} titulo={mesLargo(m.periodo).replace(/^./, (c) => c.toUpperCase())}
+      subtitulo="Efectivo que entró y salió" onCerrar={onCerrar}
+      pie={<BotonClara pregunta={`¿Cuánto efectivo me quedó en ${mesLargo(m.periodo)}?`} antes={onCerrar} />}>
+      <div className="emergente-cifra">
+        <strong style={{ color: m.neto < 0 ? "var(--bad-ink)" : undefined }}>{m.neto < 0 ? "−" : "+"}{dinero(Math.abs(m.neto))}</strong>
+        <span className="muted">{m.neto < 0 ? "salió más de lo que entró" : "entró más de lo que salió"}</span>
+      </div>
+      <ListaCifras filas={[
+        { nombre: "Entró por ventas", valor: dinero(m.entradas) },
+        { nombre: "Compras de mercancía", valor: `− ${dinero(m.compras)}` },
+        { nombre: "Gastos del negocio", valor: `− ${dinero(m.gastos)}` },
+        { nombre: "Diferencia del mes", valor: dinero(m.neto), tono: m.neto < 0 ? "mal" : "bien" },
+        { nombre: "Efectivo al cierre del mes", valor: dinero(m.saldo), tono: "fuerte" },
+      ]} />
+    </Emergente>
+  );
+}
 
 function haceDias(iso: string, dias: number): string {
   const d = new Date(`${iso}T12:00:00`);
@@ -37,6 +61,7 @@ export function Flujo() {
     : [];
   const estado = !proy ? null : proy.saldo_proyectado < 0 ? "rojo" : proy.inferior < 0 ? "amarillo" : "verde";
   const mensual = (f?.mensual ?? []).map((m) => ({ ...m, salidas: m.compras + m.gastos }));
+  const [mes, setMes] = useState<number | null>(null);
 
   return (
     <Pagina titulo="Flujo de efectivo"
@@ -44,12 +69,15 @@ export function Flujo() {
       {fl.error && <Aviso tipo="error">{fl.error}</Aviso>}
       {f ? (
         <div className="grid grid-kpi">
-          <KpiCard indice={0} etiqueta="Efectivo al inicio" valor={f.saldo_inicial} formato={(n) => dinero(Math.round(n), false)} />
-          <KpiCard indice={1} etiqueta="Entró por ventas" valor={f.entradas} formato={(n) => dinero(Math.round(n), false)} />
+          <KpiCard indice={0} etiqueta="Efectivo al inicio" valor={f.saldo_inicial} formato={(n) => dinero(Math.round(n), false)}
+            tecnico="El dinero que tenías el primer día del periodo." pregunta="¿Cuánto efectivo tengo?" />
+          <KpiCard indice={1} etiqueta="Entró por ventas" valor={f.entradas} formato={(n) => dinero(Math.round(n), false)}
+            tecnico="Todo el dinero que te pagaron tus clientes en el periodo." pregunta="¿Cuánto vendí?" />
           <KpiCard indice={2} etiqueta="Salió" tecnico="Compras de mercancía + gastos del negocio" valor={f.compras + f.gastos}
-            formato={(n) => dinero(Math.round(n), false)} nota={`compras ${dineroCompacto(f.compras)} · gastos ${dineroCompacto(f.gastos)}`} />
+            formato={(n) => dinero(Math.round(n), false)} nota={`compras ${dineroCompacto(f.compras)} · gastos ${dineroCompacto(f.gastos)}`}
+            pregunta="¿En qué gasto más?" />
           <KpiCard indice={3} etiqueta="Efectivo al final" valor={f.saldo_final} formato={(n) => dinero(Math.round(n), false)}
-            nota={f.periodo.etiqueta} />
+            nota={f.periodo.etiqueta} tecnico="El dinero que te quedó el último día del periodo." pregunta="¿Me va a alcanzar el efectivo?" />
         </div>
       ) : (
         <div className="grid grid-kpi">{[0, 1, 2, 3].map((i) => <TarjetaCargando key={i} alto={50} />)}</div>
@@ -90,6 +118,7 @@ export function Flujo() {
                 <span className="pequeno fila" style={{ gap: 4 }}><ArrowDownLeft size={15} color="var(--s1)" /> entra {dinero(proy.entradas_diarias)}/día</span>
                 <span className="pequeno fila" style={{ gap: 4 }}><ArrowUpRight size={15} color="var(--s2)" /> sale {dinero(proy.salidas_diarias)}/día</span>
               </div>
+              <BotonClara pregunta="¿Me va a alcanzar el efectivo?" texto="Pregúntale a Clara" />
               {proy.saldo_proyectado < 0 && (
                 <Aviso>
                   Pospón compras que no sean urgentes. Si lo necesitas, puedes evaluar un financiamiento de corto plazo para capital de
@@ -110,7 +139,7 @@ export function Flujo() {
           <div style={{ height: 250 }}>
             {f && (
               <ResponsiveContainer>
-                <BarChart data={mensual} barGap={2} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                <BarChart data={mensual} barGap={2} margin={{ top: 4, right: 4, bottom: 0, left: 0 }} onClick={(e) => setMes(indicePicado(e))} style={{ cursor: "pointer" }}>
                   <CartesianGrid vertical={false} stroke="var(--grid)" />
                   <XAxis dataKey="etiqueta" {...EJE} />
                   <YAxis {...EJE} width={60} tickFormatter={dineroCompacto} />
@@ -121,6 +150,7 @@ export function Flujo() {
               </ResponsiveContainer>
             )}
           </div>
+          <p className="pista-grafica"><MousePointerClick size={13} aria-hidden="true" /> Toca un mes para ver su detalle.</p>
         </Tarjeta>
         <Tarjeta retraso={0.14}>
           <TituloTarjeta icono={Wallet} titulo="Salidas de efectivo por concepto" sub="Compras de mercancía y gastos del periodo" />
@@ -154,6 +184,8 @@ export function Flujo() {
           )}
         </Tarjeta>
       </div>
+
+      <AnimatePresence>{mes !== null && mensual[mes] && <DetalleMesFlujo m={mensual[mes]} onCerrar={() => setMes(null)} />}</AnimatePresence>
     </Pagina>
   );
 }

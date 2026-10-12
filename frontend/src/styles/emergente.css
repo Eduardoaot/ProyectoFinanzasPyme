@@ -1,0 +1,86 @@
+/* ---------- Ventanas emergentes (detalle al picar algo) ----------
+   Las usan los dos modos: tarjetas del Inicio sencillo, KPIs, meses de las gráficas, alertas y productos. */
+
+.velo-emergente { position: fixed; inset: 0; z-index: 75; display: grid; place-items: center; padding: 16px; background: rgb(8 11 15 / 0.5); backdrop-filter: blur(2px); }
+.velo-emergente.lado { place-items: stretch end; padding: 0; }
+
+.emergente {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 32px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.emergente.chico { width: min(420px, 100%); }
+.emergente.lado { width: min(520px, 100vw); height: 100dvh; max-height: none; border-radius: 0; border-width: 0 0 0 1px; }
+
+.emergente-cabecera { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--line); }
+.emergente-icono { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--celeste-soft); color: var(--celeste-strong); }
+.emergente-titulos { flex: 1; min-width: 0; }
+.emergente-titulos h2 { margin: 0; font-size: 1.125rem; line-height: 1.3; }
+.emergente-titulos p { margin: 4px 0 0; color: var(--muted); font-size: var(--fs-sm); }
+.emergente-cuerpo { flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 14px; font-size: var(--fs-base); line-height: 1.55; }
+.emergente-cuerpo p { margin: 0; }
+.emergente-pie { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--line); background: var(--surface-2); }
+
+/* Cifra grande del detalle (KPI, mes, producto). */
+.emergente-cifra { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; }
+.emergente-cifra strong { font-size: var(--fs-2xl); line-height: 1.1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.emergente-explica { padding: 12px 14px; border-radius: 12px; background: var(--celeste-tint); border: 1px solid var(--celeste-soft); color: var(--ink-2); }
+.emergente-grafica { height: 200px; }
+
+.lista-cifras { margin: 0; display: flex; flex-direction: column; }
+.lista-cifras > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 9px 0; border-bottom: 1px dashed var(--line); }
+.lista-cifras > div:last-child { border-bottom: 0; }
+.lista-cifras dt { color: var(--ink-2); }
+.lista-cifras dd { margin: 0; font-weight: 650; text-align: right; }
+.lista-cifras .fuerte dd { font-size: 1.125rem; }
+.lista-cifras .bien dd { color: var(--ok-ink); }
+.lista-cifras .mal dd { color: var(--bad-ink); }
+
+/* Cualquier cosa que se pueda picar para abrir un detalle. */
+.picable { cursor: pointer; }
+.picable:focus-visible { outline: 2px solid var(--celeste); outline-offset: 2px; }
+
+/* KPI del modo avanzado: botón visible para abrir el detalle (para teclado y para que se note que se puede picar). */
+.kpi-abrir {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.kpi:hover .kpi-abrir, .kpi-abrir:focus-visible { color: var(--celeste-strong); background: var(--celeste-soft); }
+.kpi-abrir:focus-visible { outline: 2px solid var(--celeste); outline-offset: 2px; }
+
+/* Alertas y datos clave que se abren en detalle. */
+.alerta.picable { transition: box-shadow 0.15s, border-color 0.15s; }
+.alerta.picable:hover { box-shadow: var(--shadow); }
+.dato.picable { border-radius: 8px; transition: background 0.15s; }
+.dato.picable:hover { background: var(--surface-hover); }
+
+/* Pista bajo las gráficas: "Toca una barra para ver el mes". */
+.pista-grafica { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--muted); font-size: var(--fs-xs); }
+
+@media (max-width: 600px) {
+  .velo-emergente.centro { padding: 0; place-items: end stretch; }
+  .emergente.centro { width: 100%; max-height: 90dvh; border-radius: 18px 18px 0 0; }
+  .emergente-pie .btn { flex: 1 1 auto; }
+}
+
+/* Renglones picables dentro de tarjetas (gastos por categoría, estado de resultados, compras). */
+.fila-picable { padding: 4px 6px; margin: 0 -6px; border-radius: 8px; transition: background 0.15s; }
+.fila-picable:hover, .er-linea.picable:hover { background: var(--surface-hover); }
+.er-linea.picable { border-radius: 8px; transition: background 0.15s; }

@@ -207,15 +207,15 @@ export function Proyecciones() {
 
       {d ? (
         <div className="grid grid-kpi">
-          <KpiCard indice={0} etiqueta={`Ventas de ${mesNombre}`} tecnico="Ventas proyectadas del mes: lo vendido a la fecha más el pronóstico de los días que faltan"
+          <KpiCard indice={0} etiqueta={`Ventas de ${mesNombre}`} pregunta="¿Cuánto voy a vender el próximo mes?" tecnico="Ventas proyectadas del mes: lo vendido a la fecha más el pronóstico de los días que faltan"
             valor={d.mes.ventas} formato={(n) => dinero(Math.round(n), false)} nota={`entre ${dineroCompacto(d.mes.ventas_pesimista)} y ${dineroCompacto(d.mes.ventas_optimista)}`} />
-          <KpiCard indice={1} etiqueta="Lo que ganarías" tecnico="Utilidad proyectada del mes, antes de impuestos"
+          <KpiCard indice={1} etiqueta="Lo que ganarías" pregunta="¿Cuánto voy a ganar el próximo mes?" tecnico="Utilidad proyectada del mes, antes de impuestos"
             valor={d.mes.utilidad} formato={(n) => dinero(Math.round(n), false)} nota={`entre ${dineroCompacto(d.mes.utilidad_pesimista)} y ${dineroCompacto(d.mes.utilidad_optimista)}`} />
-          <KpiCard indice={2} etiqueta="Efectivo a fin de mes" tecnico="Efectivo estimado (escenario esperado)"
+          <KpiCard indice={2} etiqueta="Efectivo a fin de mes" pregunta="¿Me va a alcanzar el efectivo?" tecnico="Efectivo estimado (escenario esperado)"
             valor={d.flujo.fin_de_mes.esperado} formato={(n) => dinero(Math.round(n), false)} nota={`si te va mal: ${dineroCompacto(d.flujo.fin_de_mes.pesimista)}`} />
-          <KpiCard indice={3} etiqueta="Días de colchón" tecnico="Efectivo actual / gasto diario promedio (gastos + compras + pagos de deuda)"
+          <KpiCard indice={3} etiqueta="Días de colchón" pregunta="¿Me va a alcanzar el efectivo?" tecnico="Efectivo actual / gasto diario promedio (gastos + compras + pagos de deuda)"
             valor={d.flujo.dias_colchon} formato={(n) => `${numero(Math.round(n))} días`} nota="cuánto aguantas sin vender" />
-          <KpiCard indice={4} etiqueta="Precisión aproximada" tecnico="100% menos el error promedio del método en las últimas 8 semanas"
+          <KpiCard indice={4} etiqueta="Precisión aproximada" pregunta="¿Qué es el pronóstico?" tecnico="100% menos el error promedio del método en las últimas 8 semanas"
             valor={d.pronostico.precision} formato={(n) => `${numero(Math.round(n))}%`} nota={d.pronostico.precision === null ? "faltan semanas de historia" : "qué tan bien acertó antes"} />
         </div>
       ) : (

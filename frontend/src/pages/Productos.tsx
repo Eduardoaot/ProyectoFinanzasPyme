@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { Area, Bar, BarChart, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { EJE, Leyenda, SERIE, TooltipGrafica } from "../components/charts/comun";
 import { Aviso, Semaforo, Tarjeta, TarjetaCargando, TituloTarjeta } from "../components/ui/basicos";
+import { BotonClara } from "../components/ui/Emergente";
 import { KpiCard } from "../components/ui/KpiCard";
 import { Pagina } from "../components/ui/Pagina";
 import { usePeriodo } from "../context/Periodo";
@@ -89,6 +90,10 @@ function DetalleProducto({ p, idEmpresa, cerrar }: { p: ProductoMetricas; idEmpr
               modelo estadístico (Prophet/ARIMA).
             </p>
           </div>
+          <div className="fila envolver" style={{ gap: 8 }}>
+            <BotonClara antes={cerrar}
+              pregunta={p.semaforo === "rojo" || p.semaforo === "amarillo" ? "¿Qué productos tengo que resurtir?" : "¿Qué producto me deja más?"} />
+          </div>
         </div>
       </motion.aside>
     </>
@@ -150,13 +155,13 @@ export function Productos() {
       ) : (
         <>
           <div className="grid grid-kpi">
-            <KpiCard indice={0} etiqueta="Dinero en tu inventario hoy" valor={datos.inventario.valor_total} formato={dinero}
+            <KpiCard indice={0} etiqueta="Dinero en tu inventario hoy" pregunta="¿Cuánto tengo en inventario?" valor={datos.inventario.valor_total} formato={dinero}
               tecnico="Valor del inventario a costo: existencias de hoy × lo que te costó cada producto"
               nota={`${numero(datos.inventario.unidades_total)} piezas en existencia`} />
-            <KpiCard indice={1} etiqueta="Si vendieras todo" valor={datos.inventario.valor_a_precio_venta} formato={dinero}
+            <KpiCard indice={1} etiqueta="Si vendieras todo" pregunta="¿Qué producto me deja más?" valor={datos.inventario.valor_a_precio_venta} formato={dinero}
               tecnico="Existencias de hoy × precio de venta"
               nota={`te dejaría ${dinero(datos.inventario.valor_a_precio_venta - datos.inventario.valor_total)} más de lo que pagaste`} />
-            <KpiCard indice={2} etiqueta="Compraste de mercancía" valor={datos.inventario.compras_periodo} formato={dinero}
+            <KpiCard indice={2} etiqueta="Compraste de mercancía" pregunta="¿Qué productos tengo que resurtir?" valor={datos.inventario.compras_periodo} formato={dinero}
               tecnico="Compras de producto registradas en el periodo elegido" nota={datos.periodo.etiqueta} />
           </div>
 

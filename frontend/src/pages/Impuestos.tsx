@@ -205,13 +205,13 @@ export function Impuestos() {
 
       {d ? (
         <div className="grid grid-kpi">
-          <KpiCard indice={0} etiqueta="Pagas al SAT" tecnico="ISR + IVA del mes" valor={d.total_a_pagar} formato={(n) => dinero(n)} nota={`antes del ${fechaLarga(d.fecha_limite)}`} />
-          <KpiCard indice={1} etiqueta="Aparta por cada $100" tecnico="Impuestos estimados / ventas × 100" valor={d.apartar_por_cada_100} formato={(n) => dinero(n)} nota="cada que vendes $100" />
-          <KpiCard indice={2} etiqueta="ISR del mes" tecnico="Impuesto sobre la renta (sobre tu ganancia o tus ingresos)" valor={d.isr} formato={(n) => dinero(n)} />
-          <KpiCard indice={3} etiqueta={d.saldo_a_favor > 0 ? "IVA a tu favor" : "IVA del mes"} tecnico="IVA trasladado − IVA acreditable" valor={d.saldo_a_favor > 0 ? d.saldo_a_favor : d.iva_a_pagar} formato={(n) => dinero(n)}
+          <KpiCard indice={0} etiqueta="Pagas al SAT" pregunta="¿Cuánto le pago al SAT este mes?" tecnico="ISR + IVA del mes" valor={d.total_a_pagar} formato={(n) => dinero(n)} nota={`antes del ${fechaLarga(d.fecha_limite)}`} />
+          <KpiCard indice={1} etiqueta="Aparta por cada $100" pregunta="¿Cuánto debo apartar para el SAT?" tecnico="Impuestos estimados / ventas × 100" valor={d.apartar_por_cada_100} formato={(n) => dinero(n)} nota="cada que vendes $100" />
+          <KpiCard indice={2} etiqueta="ISR del mes" pregunta="¿Qué es el ISR?" tecnico="Impuesto sobre la renta (sobre tu ganancia o tus ingresos)" valor={d.isr} formato={(n) => dinero(n)} />
+          <KpiCard indice={3} etiqueta={d.saldo_a_favor > 0 ? "IVA a tu favor" : "IVA del mes"} pregunta="¿Qué es el IVA?" tecnico="IVA trasladado − IVA acreditable" valor={d.saldo_a_favor > 0 ? d.saldo_a_favor : d.iva_a_pagar} formato={(n) => dinero(n)}
             nota={d.saldo_a_favor > 0 ? "se descuenta en los meses siguientes" : undefined} />
-          <KpiCard indice={4} etiqueta="Tasa de impuestos del año" tecnico="(ISR + IVA pagados) / ingresos del año" valor={d.tasa_efectiva_anual === null ? null : d.tasa_efectiva_anual * 100} formato={(n) => `${n.toFixed(1)}%`} />
-          <KpiCard indice={5} etiqueta="Dinero que estás perdiendo" tecnico="Gastos sin factura o en efectivo × tasa marginal + IVA no acreditado" valor={perdido?.monto ?? 0} formato={(n) => dinero(n)}
+          <KpiCard indice={4} etiqueta="Tasa de impuestos del año" pregunta="¿Cuánto pago de impuestos?" tecnico="(ISR + IVA pagados) / ingresos del año" valor={d.tasa_efectiva_anual === null ? null : d.tasa_efectiva_anual * 100} formato={(n) => `${n.toFixed(1)}%`} />
+          <KpiCard indice={5} etiqueta="Dinero que estás perdiendo" pregunta="¿Qué gastos puedo deducir?" tecnico="Gastos sin factura o en efectivo × tasa marginal + IVA no acreditado" valor={perdido?.monto ?? 0} formato={(n) => dinero(n)}
             nota={perdido && perdido.gastos > 0 ? `por ${perdido.gastos} gastos sin deducir` : "estás al corriente"} />
         </div>
       ) : (
