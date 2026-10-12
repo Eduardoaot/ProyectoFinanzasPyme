@@ -290,3 +290,7 @@ input[type="checkbox"] { accent-color: var(--celeste); width: 16px; height: 16px
 /* Mi equipo: selector de permiso por persona */
 .select-rol { width: auto; height: 34px; font-size: var(--fs-sm); }
 .perfil { align-items: start; }
+
+/* Impuestos: lo que pagarías de aquí a la declaración anual. */
+.resumen-anual { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--celeste-tint); border: 1px solid var(--celeste-soft); }
+.resumen-anual strong { font-size: var(--fs-lg); }

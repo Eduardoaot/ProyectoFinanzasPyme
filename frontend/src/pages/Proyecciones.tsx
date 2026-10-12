@@ -174,7 +174,7 @@ function Equilibrio({ d, mesNombre }: { d: TipoProyecciones; mesNombre: string }
 export function Proyecciones() {
   const { empresa } = useSesion();
   const id = empresa?.id_empresa;
-  const [semanas, setSemanas] = useState<"4" | "8" | "12">("8");
+  const [semanas, setSemanas] = useState<"2" | "4" | "8">("4");
   const listo = Boolean(id && empresa?.tiene_datos);
   const pr = useApi<TipoProyecciones>(listo ? `/empresas/${id}/proyecciones` : null, { semanas });
   const d = pr.datos;
@@ -233,7 +233,7 @@ export function Proyecciones() {
       <Seccion numero={1} icono={ChartLine} titulo="¿Cuánto vas a vender y te alcanzará el efectivo?"
         descripcion="Pronóstico semana a semana. El horizonte cambia estas dos gráficas; las cifras de arriba son siempre del mes en curso."
         derecha={<Segmentado etiqueta="Horizonte de las gráficas" valor={semanas} onChange={setSemanas}
-          opciones={[{ valor: "4", texto: "4 semanas" }, { valor: "8", texto: "8 semanas" }, { valor: "12", texto: "12 semanas" }]} />}>
+          opciones={[{ valor: "2", texto: "2 semanas" }, { valor: "4", texto: "4 semanas" }, { valor: "8", texto: "8 semanas" }]} />}>
         <div className="grid grid-2">
           <Tarjeta retraso={0.04}>
             <TituloTarjeta icono={ChartLine} titulo="Ventas por semana"

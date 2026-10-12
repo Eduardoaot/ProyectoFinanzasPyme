@@ -10,7 +10,7 @@ import { Pagina } from "../components/ui/Pagina";
 import { useSesion } from "../context/Sesion";
 import { useApi } from "../hooks/useApi";
 import { api } from "../lib/api";
-import { dinero, dineroCompacto, fechaCorta, fechaLarga } from "../lib/formato";
+import { dinero, dineroCompacto, fechaCorta, fechaLarga, rangoDias } from "../lib/formato";
 import type { GastoClasificado, Impuestos as TipoImpuestos } from "../lib/predictivo";
 
 const REGIMENES = {
@@ -205,7 +205,8 @@ export function Impuestos() {
 
       {d ? (
         <div className="grid grid-kpi">
-          <KpiCard indice={0} etiqueta="Pagas al SAT" pregunta="¿Cuánto le pago al SAT este mes?" tecnico="ISR + IVA del mes" valor={d.total_a_pagar} formato={(n) => dinero(n)} nota={`antes del ${fechaLarga(d.fecha_limite)}`} />
+          <KpiCard indice={0} etiqueta="Debes de impuestos" pregunta="¿Cuánto le pago al SAT este mes?" tecnico="ISR + IVA del mes" valor={d.total_a_pagar} formato={(n) => dinero(n)}
+            nota={`por lo vendido ${rangoDias(d.periodo_desde, d.periodo_hasta)}`} />
           <KpiCard indice={1} etiqueta="Aparta por cada $100" pregunta="¿Cuánto debo apartar para el SAT?" tecnico="Impuestos estimados / ventas × 100" valor={d.apartar_por_cada_100} formato={(n) => dinero(n)} nota="cada que vendes $100" />
           <KpiCard indice={2} etiqueta="ISR del mes" pregunta="¿Qué es el ISR?" tecnico="Impuesto sobre la renta (sobre tu ganancia o tus ingresos)" valor={d.isr} formato={(n) => dinero(n)} />
           <KpiCard indice={3} etiqueta={d.saldo_a_favor > 0 ? "IVA a tu favor" : "IVA del mes"} pregunta="¿Qué es el IVA?" tecnico="IVA trasladado − IVA acreditable" valor={d.saldo_a_favor > 0 ? d.saldo_a_favor : d.iva_a_pagar} formato={(n) => dinero(n)}
@@ -264,6 +265,18 @@ export function Impuestos() {
               </motion.li>
             ))}
           </ul>
+          {/* Solo con el mes más reciente: "de aquí a la anual" no tiene sentido para un mes que ya pasó. */}
+          {d && !mes && (
+            <div className="resumen-anual">
+              <span className="eyebrow">De aquí a la declaración anual ({fechaLarga(d.hasta_la_anual.hasta)})</span>
+              <strong className="num">{dinero(d.hasta_la_anual.total, false)} <span className="mini muted">aprox.</span></strong>
+              <span className="mini muted justificado">
+                {d.hasta_la_anual.pagos_mensuales} pagos mensuales ({dinero(d.hasta_la_anual.total_mensuales, false)}) + ajuste de la declaración anual
+                ({d.hasta_la_anual.ajuste_anual === null ? "no se puede estimar" : dinero(d.hasta_la_anual.ajuste_anual, false)}).
+                Los pagos que vienen se estiman con el promedio de tus últimos meses.
+              </span>
+            </div>
+          )}
           {d?.ptu && <p className="mini muted justificado">PTU: estimamos {dinero(d.ptu.anual_estimada, false)} al año; aparta {dinero(d.ptu.provision_mensual, false)} cada mes.</p>}
         </Tarjeta>
       </div>

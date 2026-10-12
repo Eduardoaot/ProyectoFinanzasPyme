@@ -256,3 +256,24 @@
   .fab-chat .texto { display: none; }
   .panel-chat { right: 8px; left: 8px; width: auto; bottom: 16px; height: calc(100dvh - 32px); }
 }
+
+/* Tamaño del texto (botón "Aa" de la barra superior). */
+.panel-tamano { width: min(240px, calc(100vw - 32px)); gap: 6px; }
+.opcion-tamano {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.opcion-tamano:hover { background: var(--surface-hover); }
+.opcion-tamano.activa { border-color: var(--celeste); background: var(--celeste-soft); color: var(--celeste-strong); }
+.opcion-tamano .muestra { width: 2.2rem; font-weight: 700; line-height: 1; }
+.opcion-tamano .nombre { flex: 1; font-weight: 600; }

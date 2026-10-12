@@ -30,11 +30,13 @@ def test_una_deuda_de_otra_empresa_no_se_puede_tocar(cliente, ana, lupita):
 
 
 def test_proyecciones_responde_con_las_secciones(cliente, ana):
-    r = cliente.get("/api/empresas/1/proyecciones?semanas=12", headers=ana).json()
+    r = cliente.get("/api/empresas/1/proyecciones?semanas=2", headers=ana).json()
     for clave in ("pronostico", "mes", "flujo", "equilibrio", "inventario", "consejos", "alertas"):
         assert clave in r
-    assert r["pronostico"]["semanas_horizonte"] == 12
-    assert cliente.get("/api/empresas/1/proyecciones?semanas=5", headers=ana).status_code == 422
+    assert r["pronostico"]["semanas_horizonte"] == 2
+    assert cliente.get("/api/empresas/1/proyecciones", headers=ana).json()["pronostico"]["semanas_horizonte"] == 4
+    for invalida in (5, 12):
+        assert cliente.get(f"/api/empresas/1/proyecciones?semanas={invalida}", headers=ana).status_code == 422
 
 
 def test_escenario_recalcula(cliente, ana):

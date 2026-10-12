@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import { usePeriodo } from "../../context/Periodo";
 import { useSesion } from "../../context/Sesion";
 import { partesRespuesta, useConversacion, type Mensaje } from "../../hooks/useConversacion";
+import { useSeguirAbajo } from "../../hooks/useSeguirAbajo";
 import { api } from "../../lib/api";
 import { textoParaVoz } from "../../lib/formato";
 import type { ChatRespuesta } from "../../lib/tipos";
@@ -136,7 +137,7 @@ export function VentanaClara({ tema, onCerrar }: { tema: TemaClara; onCerrar: ()
   const { otras, pedir } = useOtrasPalabras();
   const [texto, setTexto] = useState("");
   const cerrar = useRef<HTMLButtonElement>(null);
-  const final = useRef<HTMLDivElement>(null);
+  const { caja: cuerpo, alDesplazar } = useSeguirAbajo(mensajes);
   const voz = useReconocimiento((dicho) => enviar(dicho));
   const hechas = new Set(mensajes.filter((m) => m.rol === "usuario").map((m) => m.texto));
 
@@ -154,10 +155,6 @@ export function VentanaClara({ tema, onCerrar }: { tema: TemaClara; onCerrar: ()
       alCerrar.current.callar();
     };
   }, []);
-
-  useEffect(() => {
-    final.current?.scrollIntoView?.({ behavior: "smooth", block: "end" });
-  }, [mensajes]);
 
   const mandar = (e: FormEvent) => {
     e.preventDefault();
@@ -179,7 +176,7 @@ export function VentanaClara({ tema, onCerrar }: { tema: TemaClara; onCerrar: ()
           </button>
         </header>
 
-        <div className="ventana-clara-cuerpo">
+        <div className="ventana-clara-cuerpo" ref={cuerpo} onScroll={alDesplazar}>
           <div className="que-es">
             <h3>¿Qué es esto?</h3>
             {tema.explicacion.map((p) => <p key={p}>{p}</p>)}
@@ -214,7 +211,6 @@ export function VentanaClara({ tema, onCerrar }: { tema: TemaClara; onCerrar: ()
                 </motion.div>
               ))}
             </AnimatePresence>
-            <div ref={final} />
           </div>
         </div>
 

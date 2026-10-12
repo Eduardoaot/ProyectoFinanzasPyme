@@ -6,6 +6,7 @@ import { guardarModo } from "../../lib/modo";
 import { Logo } from "../ui/basicos";
 import { MenuUsuario } from "./MenuUsuario";
 import { SelectorEmpresa } from "./SelectorEmpresa";
+import { TamanoTexto } from "./TamanoTexto";
 
 /** Marco del Inicio sencillo: sin menú lateral, solo el negocio, la cuenta y el paso al modo avanzado. */
 export function LayoutSencillo({ tema, alternarTema }: { tema: "light" | "dark"; alternarTema: () => void }) {
@@ -24,6 +25,7 @@ export function LayoutSencillo({ tema, alternarTema }: { tema: "light" | "dark";
         <span className="logo-sencillo"><Logo tamano={32} conTexto={false} /></span>
         <SelectorEmpresa empresas={empresas} idActual={idEmpresa ?? undefined} nombre={nombre} onCambiar={cambiarEmpresa} />
         <div className="topbar-cuenta">
+          <TamanoTexto />
           <button className="btn icono fantasma" onClick={alternarTema} aria-label={tema === "dark" ? "Usar tema claro" : "Usar tema oscuro"}>
             {tema === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>

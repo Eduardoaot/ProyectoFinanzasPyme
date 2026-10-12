@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useChat, type Mensaje } from "../../context/Chat";
 import { useSesion } from "../../context/Sesion";
+import { useSeguirAbajo } from "../../hooks/useSeguirAbajo";
 import { useReconocimiento, vozSoportada } from "../../lib/voz";
 
 const PREGUNTAS_GUIA = [
@@ -110,17 +111,13 @@ export function Conversacion({ compacto = false }: { compacto?: boolean }) {
   const { mensajes, ocupado, enviar, cancelar, cerrarChat, vozAutomatica, setVozAutomatica } = useChat();
   const { empresa } = useSesion();
   const [texto, setTexto] = useState("");
-  const lista = useRef<HTMLDivElement>(null);
+  const { caja: lista, alDesplazar } = useSeguirAbajo(mensajes);
   const caja = useRef<HTMLTextAreaElement>(null);
   const voz = useReconocimiento((dicho) => {
     setTexto("");
     enviar(dicho);
   });
   const valorCaja = voz.escuchando ? voz.parcial : texto;
-
-  useEffect(() => {
-    lista.current?.scrollTo({ top: lista.current.scrollHeight });
-  }, [mensajes]);
 
   // La caja crece con el texto (hasta el max-height del CSS) en lugar de mostrar una barra de desplazamiento.
   useEffect(() => {
@@ -174,7 +171,7 @@ export function Conversacion({ compacto = false }: { compacto?: boolean }) {
         )}
       </div>
 
-      <div className="chat-mensajes" ref={lista}>
+      <div className="chat-mensajes" ref={lista} onScroll={alDesplazar}>
         {mensajes.length === 0 && (
           <motion.div className="pila" style={{ alignItems: "center", textAlign: "center", padding: compacto ? "12px 4px" : "28px 8px" }}
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>

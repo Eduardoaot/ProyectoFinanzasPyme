@@ -22,8 +22,8 @@ from app.proyecciones import servicio as proy_srv
 router = APIRouter(prefix="/empresas/{id_empresa}", tags=["predictivo"])
 
 
-def _semanas(semanas: int = Query(8, description="Horizonte del pronóstico: 4, 8 o 12 semanas")) -> int:
-    if semanas not in (4, 8, 12):
+def _semanas(semanas: int = Query(4, description="Horizonte del pronóstico: 2, 4 u 8 semanas")) -> int:
+    if semanas not in (2, 4, 8):
         raise HTTPException(422, "Revisa estos datos: semanas.")
     return semanas
 

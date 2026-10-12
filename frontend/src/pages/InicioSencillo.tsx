@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, ArrowRight, BarChart3, CalendarDays, CheckCircle2, ChevronRight, CreditCard, FileSpreadsheet, Landmark,
+  AlertTriangle, ArrowRight, BarChart3, CheckCircle2, ChevronRight, CreditCard, FileSpreadsheet, Landmark,
   MousePointerClick, OctagonAlert, Package, ShoppingBasket, Sparkles, TrendingUp, type LucideIcon,
 } from "lucide-react";
 import { lazy, Suspense, useState, type ReactNode } from "react";
@@ -161,7 +161,7 @@ function Panel({ icono: Icono, titulo, tema, detalles, clase = "", indice = 0, c
         <div className="panel-cuerpo picable" role="button" tabIndex={0} aria-haspopup="dialog" aria-label={`Ver detalle: ${titulo}`}
           onClick={onAbrir} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAbrir(); } }}>
           {children}
-          <span className="pista-panel" aria-hidden="true">Toca para ver más <ChevronRight size={14} /></span>
+          <span className="pista-panel" aria-hidden="true">Ver detalle <ChevronRight size={14} /></span>
         </div>
       ) : children}
       <div className="panel-acciones">
@@ -169,8 +169,8 @@ function Panel({ icono: Icono, titulo, tema, detalles, clase = "", indice = 0, c
           aria-label={`Pregúntale a Clara: ${titulo}`} title="Pregúntale a Clara qué significa">
           <Sparkles size={15} aria-hidden="true" /> Preguntar
         </button>
-        <Link to={detalles} className="accion-mini" aria-label={`Ver más: ${titulo}`} title="Ver esta sección completa">
-          Ver más <ArrowRight size={15} aria-hidden="true" />
+        <Link to={detalles} className="accion-mini" aria-label={`Ir a la sección: ${titulo}`} title="Abrir la sección completa">
+          Ir a la sección <ArrowRight size={15} aria-hidden="true" />
         </Link>
       </div>
     </motion.section>
@@ -192,7 +192,7 @@ function PieDetalle({ onClara, a }: { onClara: () => void; a: string }) {
   return (
     <>
       <button type="button" className="btn celeste" onClick={onClara}><Sparkles size={16} aria-hidden="true" /> Pregúntale a Clara</button>
-      <IrASeccion a={a} texto="Ver más" />
+      <IrASeccion a={a} texto="Ir a la sección" />
     </>
   );
 }
@@ -315,8 +315,7 @@ function DetalleSencillo({ d, x, onCerrar, onClara }: {
         <h3 className="pequeno">Este mes</h3>
         {t.a_pagar > 0 ? (
           <p>
-            Por lo que vendiste <strong>{rangoDias(t.periodo_desde, t.periodo_hasta)}</strong> debes <strong>{entero(t.a_pagar)}</strong> de
-            impuestos. Tienes que pagarlo <strong>a más tardar el {diaMes(t.fecha_limite)}</strong>.
+            Por lo que vendiste <strong>{rangoDias(t.periodo_desde, t.periodo_hasta)}</strong> debes <strong>{entero(t.a_pagar)}</strong> de impuestos.
           </p>
         ) : (
           <p>Por lo que vendiste <strong>{rangoDias(t.periodo_desde, t.periodo_hasta)}</strong> no te toca pagar impuestos.</p>
@@ -410,7 +409,7 @@ export function InicioSencillo() {
     <div className="inicio-sencillo">
       <div className="saludo-sencillo">
         <h1>Hola, {nombre}</h1>
-        <p className="muted pista-saludo"><MousePointerClick size={15} aria-hidden="true" /> Toca cualquier tarjeta para ver más.</p>
+        <p className="muted pista-saludo"><MousePointerClick size={15} aria-hidden="true" /> Toca cualquier tarjeta para ver su detalle.</p>
       </div>
       {inicio.error && <Aviso tipo="error">{inicio.error}</Aviso>}
 
@@ -486,7 +485,6 @@ export function InicioSencillo() {
                     <>
                       <Cifra nombre={`Debes por lo vendido ${rangoDias(d.impuestos.periodo_desde, d.impuestos.periodo_hasta)}`}
                         valor={entero(d.impuestos.a_pagar)} />
-                      <span className="chip warn"><CalendarDays size={14} aria-hidden="true" /> Págalo antes del {diaMes(d.impuestos.fecha_limite)}</span>
                     </>
                   ) : (
                     <span className="chip ok"><CheckCircle2 size={14} aria-hidden="true" /> Por {d.impuestos.mes.toLowerCase()} no pagas</span>

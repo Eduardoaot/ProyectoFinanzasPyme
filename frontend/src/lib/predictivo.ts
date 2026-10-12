@@ -172,6 +172,11 @@ export interface Impuestos {
   iva_a_pagar: number;
   saldo_a_favor: number;
   fecha_limite: string;
+  /** Días que cubre el pago del mes. */
+  periodo_desde: string;
+  periodo_hasta: string;
+  /** Pagos que vencen desde el del mes hasta la declaración anual (aproximado). */
+  hasta_la_anual: { desde: string; hasta: string; pagos_mensuales: number; total_mensuales: number; ajuste_anual: number | null; total: number };
   apartar_por_cada_100: number | null;
   tasa_efectiva_anual: number | null;
   total_acumulado_anio: number;

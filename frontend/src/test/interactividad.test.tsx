@@ -44,7 +44,7 @@ describe("Inicio sencillo interactivo", () => {
     expect(ventana).toHaveTextContent("Lo vendes en$45");
     expect(ventana).toHaveTextContent("$22.50");
     expect(ventana).toHaveTextContent("Se te acaba: pide unas 25 piezas para 2 semanas.");
-    expect(within(ventana).getByRole("link", { name: "Ver más" })).toHaveAttribute("href", "/productos");
+    expect(within(ventana).getByRole("link", { name: "Ir a la sección" })).toHaveAttribute("href", "/productos");
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   });

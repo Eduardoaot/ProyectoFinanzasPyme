@@ -47,7 +47,7 @@ export function textoALeer(r: ChatRespuesta): string {
  * Una conversación con Clara. El chat flotante tiene una; cada ventana de "¿Qué es esto?" del
  * Inicio sencillo abre otra, aparte, en modo sencillo (palabras de todos los días, sin jerga).
  */
-export function useConversacion({ sencillo = false, usarIa = true, vozInicial = true }: {
+export function useConversacion({ sencillo = false, usarIa = true, vozInicial = false }: {
   sencillo?: boolean;
   /** false: responde el sistema al instante; la redacción de la IA se pide aparte. */
   usarIa?: boolean;
