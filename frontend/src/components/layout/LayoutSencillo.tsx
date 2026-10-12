@@ -1,4 +1,4 @@
-import { LayoutDashboard, Moon, Sun } from "lucide-react";
+import { ArrowRight, LayoutDashboard, Moon, Sun } from "lucide-react";
 import { Suspense } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useSesion } from "../../context/Sesion";
@@ -36,8 +36,8 @@ export function LayoutSencillo({ tema, alternarTema }: { tema: "light" | "dark";
         </Suspense>
         <section className="pase-avanzado">
           <p>¿Quieres ver todo con más detalle, con todas las gráficas y tablas?</p>
-          <button type="button" className="btn grande" onClick={irAvanzado}>
-            <LayoutDashboard size={20} /> Ver todo con detalle (modo avanzado)
+          <button type="button" className="btn primario boton-avanzado" onClick={irAvanzado}>
+            <LayoutDashboard size={18} aria-hidden="true" /> Ver todo con detalle (modo avanzado) <ArrowRight size={18} aria-hidden="true" />
           </button>
         </section>
       </main>

@@ -312,6 +312,22 @@ export interface Importacion {
 /* ---------- Inicio sencillo (GET /empresas/{id}/inicio) ---------- */
 export type Estado3 = "verde" | "amarillo" | "rojo";
 
+/** Producto del Inicio sencillo, con lo necesario para su mini resumen (cifras y consejo calculados en el backend). */
+export interface ProductoSencillo {
+  nombre: string;
+  unidad: string;
+  vendiste: number;
+  te_dejo: number;
+  inventario: Semaforo;
+  precio: number;
+  costo: number;
+  te_quedan: number;
+  dias_te_alcanzan: number | null;
+  pide: number;
+  consejo: string;
+  consejo_estado: Estado3;
+}
+
 export interface Inicio {
   tiene_datos: boolean;
   como_te_fue: {
@@ -324,7 +340,7 @@ export interface Inicio {
     frase: string;
   } | null;
   ventas_por_mes: { etiqueta: string; ventas: number; actual: boolean }[];
-  productos: { nombre: string; unidad: string; vendiste: number; te_dejo: number; inventario: Semaforo }[];
+  productos: ProductoSencillo[];
   lo_que_viene: {
     mes: string;
     ventas_esperadas: number;
@@ -336,7 +352,18 @@ export interface Inicio {
     comprar: { nombre: string; cantidad: number; unidad: string; costo: number }[];
     total_compra: number;
   } | null;
-  impuestos: { mes: string; a_pagar: number; fecha_limite: string; saldo_a_favor: number; regimen: string } | null;
+  impuestos: {
+    mes: string;
+    a_pagar: number;
+    fecha_limite: string;
+    saldo_a_favor: number;
+    regimen: string;
+    /** Días que cubre el pago del mes. */
+    periodo_desde: string;
+    periodo_hasta: string;
+    /** Todo lo que pagarías desde el pago del mes hasta la declaración anual (aproximado). */
+    hasta_la_anual: { fecha_anual: string; pagos_mensuales: number; total_mensuales: number; ajuste_anual: number | null; total: number };
+  } | null;
   deudas: {
     total: number;
     pago_del_mes: number;

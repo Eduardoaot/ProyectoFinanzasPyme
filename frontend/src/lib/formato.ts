@@ -42,6 +42,17 @@ export function fechaLarga(iso: string): string {
   return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString("es-MX", { day: "numeric", month: "long", year: "numeric" });
 }
 
+/** "17 de octubre" (sin año): para fechas cercanas, que se leen mejor así. */
+export function diaMes(iso: string): string {
+  return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString("es-MX", { day: "numeric", month: "long" });
+}
+
+/** "del 1 al 30 de septiembre" o "del 1 de septiembre al 3 de octubre". */
+export function rangoDias(desde: string, hasta: string): string {
+  const mismoMes = desde.slice(0, 7) === hasta.slice(0, 7);
+  return mismoMes ? `del ${Number(desde.slice(8, 10))} al ${diaMes(hasta)}` : `del ${diaMes(desde)} al ${diaMes(hasta)}`;
+}
+
 /** Texto plano para la voz: quita Markdown, emojis y lee "$" como pesos. */
 export function textoParaVoz(markdown: string): string {
   return markdown

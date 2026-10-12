@@ -91,3 +91,12 @@ describe("interrupción del chat", () => {
     expect(textoInterrumpido({ id: "1", rol: "clara", texto: "", estado: "escribiendo", base: "### Ventas" })).toBe("### Ventas\n\n...");
   });
 });
+
+describe("rangos de fechas para impuestos", () => {
+  it("dice de qué día a qué día cubre el pago, sin el año", async () => {
+    const { rangoDias, diaMes } = await import("../lib/formato");
+    expect(rangoDias("2026-09-01", "2026-09-30")).toBe("del 1 al 30 de septiembre");
+    expect(rangoDias("2026-09-01", "2026-10-03")).toBe("del 1 de septiembre al 3 de octubre");
+    expect(diaMes("2026-10-17")).toBe("17 de octubre");
+  });
+});

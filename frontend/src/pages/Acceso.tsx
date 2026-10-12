@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Loader2, Store } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { Aviso, Logo } from "../components/ui/basicos";
 import { useSesion } from "../context/Sesion";
 import { api } from "../lib/api";
+import { guardarModo } from "../lib/modo";
 import type { Sesion } from "../lib/tipos";
 
 const PREGUNTAS = [
@@ -87,6 +89,7 @@ function PanelMarca() {
 
 export function Acceso() {
   const { entrar } = useSesion();
+  const navegar = useNavigate();
   const [modo, setModo] = useState<"entrar" | "registro">("entrar");
   const [cargando, setCargando] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +122,11 @@ export function Acceso() {
       const cuerpo = esContador
         ? { nombre, email, password, es_contador: true }
         : { ...form, ciudad: form.ciudad || null };
-      entrar(await api.post<Sesion>("/auth/registro", cuerpo));
+      const sesion = await api.post<Sesion>("/auth/registro", cuerpo);
+      // Una cuenta nueva siempre empieza en el Inicio sencillo, aunque la página anterior fuera del modo avanzado.
+      guardarModo(sesion.usuario.id_usuario, "sencillo");
+      navegar("/", { replace: true });
+      entrar(sesion);
     } catch (err) {
       setError((err as Error).message);
     } finally {

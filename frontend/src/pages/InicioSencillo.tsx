@@ -1,20 +1,21 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  AlertTriangle, ArrowRight, CheckCircle2, CircleHelp, CreditCard, FileSpreadsheet, Landmark, OctagonAlert, Package,
-  ShoppingBasket, Sparkles, TrendingUp, type LucideIcon,
+  AlertTriangle, ArrowRight, BarChart3, CalendarDays, CheckCircle2, ChevronRight, CreditCard, FileSpreadsheet, Landmark,
+  MousePointerClick, OctagonAlert, Package, ShoppingBasket, Sparkles, TrendingUp, type LucideIcon,
 } from "lucide-react";
 import { lazy, Suspense, useState, type ReactNode } from "react";
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { Link } from "react-router-dom";
-import { TooltipGrafica } from "../components/charts/comun";
+import { indicePicado, TooltipGrafica } from "../components/charts/comun";
 import type { TemaClara } from "../components/sencillo/VentanaClara";
-import { Aviso, Esqueleto } from "../components/ui/basicos";
+import { Aviso, Cambio, Esqueleto } from "../components/ui/basicos";
+import { Emergente, IrASeccion, ListaCifras } from "../components/ui/Emergente";
 import { useSesion } from "../context/Sesion";
 import { useApi } from "../hooks/useApi";
-import { dinero, dineroCompacto, fechaLarga, numero } from "../lib/formato";
-import type { Estado3, Inicio, Semaforo } from "../lib/tipos";
+import { diaMes, dinero, dineroCompacto, fechaCorta, fechaLarga, numero, rangoDias } from "../lib/formato";
+import type { Estado3, Inicio, ProductoSencillo, Semaforo } from "../lib/tipos";
 
-// La ventana (con su lector de Markdown) se descarga la primera vez que alguien toca "¿Qué es esto?".
+// La ventana (con su lector de Markdown) se descarga la primera vez que alguien toca "Preguntar".
 const VentanaClara = lazy(() => import("../components/sencillo/VentanaClara").then((m) => ({ default: m.VentanaClara })));
 
 const entero = (n: number) => dinero(Math.round(n), false);
@@ -37,7 +38,7 @@ const INVENTARIO: Record<Semaforo, string> = {
   sin_movimiento: "No se está vendiendo",
 };
 
-// "¿Qué es esto?" de cada tarjeta: escrito por personas, en palabras de todos los días.
+// Lo que Clara explica en cada tarjeta: escrito por personas, en palabras de todos los días.
 const TEMAS: Record<string, TemaClara> = {
   general: {
     titulo: "Pregúntale a Clara",
@@ -110,6 +111,7 @@ const TEMAS: Record<string, TemaClara> = {
     explicacion: [
       "El SAT es la oficina del gobierno que cobra los impuestos. Cada mes te toca pagarle una parte de lo que vendes o de lo que ganas.",
       "Lo más fácil es ir apartando ese dinero conforme vendes, para que el día de pagar no te tome por sorpresa.",
+      "Además, cada año en abril presentas la declaración anual, donde se ajusta lo que pagaste mes con mes.",
     ],
     preguntas: [
       { texto: "¿Por qué le tengo que pagar al SAT?", envia: "¿Qué es el SAT?" },
@@ -132,64 +134,255 @@ const TEMAS: Record<string, TemaClara> = {
   },
 };
 
-function TarjetaSencilla({ icono: Icono, titulo, tema, detalles, children, onPreguntar }: {
-  icono: LucideIcon; titulo: string; tema: string; detalles: string; children: ReactNode; onPreguntar: (tema: string) => void;
+/** El mini resumen de un producto le pasa a Clara su consejo y las preguntas de "Tus productos". */
+function temaProducto(p: ProductoSencillo): TemaClara {
+  return {
+    titulo: p.nombre,
+    explicacion: [p.consejo, "«Te deja» es lo que ganas con cada pieza: lo que te pagan menos lo que a ti te costó."],
+    preguntas: TEMAS.productos.preguntas,
+  };
+}
+
+const ICONO_ESTADO: Record<Estado3, LucideIcon> = { verde: CheckCircle2, amarillo: AlertTriangle, rojo: OctagonAlert };
+
+/**
+ * Tarjeta del tablero. Si tiene `onAbrir`, picar su contenido abre el detalle en una ventana;
+ * al pie quedan los dos botones chicos: preguntarle a Clara e ir a la sección.
+ */
+function Panel({ icono: Icono, titulo, tema, detalles, clase = "", indice = 0, children, onPreguntar, onAbrir }: {
+  icono: LucideIcon; titulo: string; tema: string; detalles: string; clase?: string; indice?: number;
+  children: ReactNode; onPreguntar: (tema: string) => void; onAbrir?: () => void;
 }) {
   return (
-    <motion.section className="tarjeta-sencilla" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-      <h2><span className="icono-sencillo" aria-hidden="true"><Icono size={22} /></span>{titulo}</h2>
-      {children}
-      <div className="acciones-sencillas">
-        <button type="button" className="btn grande" onClick={() => onPreguntar(tema)}>
-          <CircleHelp size={20} /> ¿Qué es esto?
+    <motion.section className={`panel-sencillo ${clase}`} aria-label={titulo}
+      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: indice * 0.05 }}>
+      <h2 className="panel-titulo"><span className="icono-sencillo" aria-hidden="true"><Icono size={18} /></span>{titulo}</h2>
+      {onAbrir ? (
+        <div className="panel-cuerpo picable" role="button" tabIndex={0} aria-haspopup="dialog" aria-label={`Ver detalle: ${titulo}`}
+          onClick={onAbrir} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onAbrir(); } }}>
+          {children}
+          <span className="pista-panel" aria-hidden="true">Toca para ver más <ChevronRight size={14} /></span>
+        </div>
+      ) : children}
+      <div className="panel-acciones">
+        <button type="button" className="accion-mini clara" onClick={() => onPreguntar(tema)}
+          aria-label={`Pregúntale a Clara: ${titulo}`} title="Pregúntale a Clara qué significa">
+          <Sparkles size={15} aria-hidden="true" /> Preguntar
         </button>
-        <Link to={detalles} className="btn grande fantasma">
-          Ver detalles <ArrowRight size={20} />
+        <Link to={detalles} className="accion-mini" aria-label={`Ver más: ${titulo}`} title="Ver esta sección completa">
+          Ver más <ArrowRight size={15} aria-hidden="true" />
         </Link>
       </div>
     </motion.section>
   );
 }
 
-function GraficaVentas({ meses }: { meses: Inicio["ventas_por_mes"] }) {
-  const actual = meses[meses.length - 1];
-  const anterior = meses[meses.length - 2];
+/** Una cifra con su nombre arriba, como en las tarjetas de un tablero. */
+function Cifra({ nombre, valor, tono }: { nombre: string; valor: string; tono?: "bien" | "mal" }) {
+  return (
+    <div className={`cifra-sencilla ${tono ?? ""}`}>
+      <span>{nombre}</span>
+      <strong>{valor}</strong>
+    </div>
+  );
+}
+
+/** Pie de los detalles del modo sencillo: Clara (ventana de preguntas) y la sección completa. */
+function PieDetalle({ onClara, a }: { onClara: () => void; a: string }) {
   return (
     <>
-      {actual && (
-        <p className="frase-sencilla">
-          En <strong>{actual.etiqueta.toLowerCase()}</strong> vendiste <strong>{entero(actual.ventas)}</strong>
-          {anterior && <>. En {anterior.etiqueta.toLowerCase()} habías vendido {entero(anterior.ventas)}</>}.
-        </p>
-      )}
-      <div style={{ height: 220 }} role="img"
+      <button type="button" className="btn celeste" onClick={onClara}><Sparkles size={16} aria-hidden="true" /> Pregúntale a Clara</button>
+      <IrASeccion a={a} texto="Ver más" />
+    </>
+  );
+}
+
+function GraficaVentas({ meses, onMes }: { meses: Inicio["ventas_por_mes"]; onMes: (i: number) => void }) {
+  return (
+    <>
+      <div className="grafica-sencilla" role="img"
         aria-label={`Ventas por mes: ${meses.map((m) => `${m.etiqueta} ${entero(m.ventas)}`).join(", ")}`}>
         <ResponsiveContainer>
-          <BarChart data={meses} margin={{ top: 28, right: 4, bottom: 0, left: 4 }}>
-            <XAxis dataKey="etiqueta" axisLine={false} tickLine={false} tick={{ fill: "var(--ink-2)", fontSize: 15, fontWeight: 600 }} />
+          <BarChart data={meses} margin={{ top: 22, right: 4, bottom: 0, left: 4 }} style={{ cursor: "pointer" }}
+            onClick={(e) => { const i = indicePicado(e); if (i !== null) onMes(i); }}>
+            <XAxis dataKey="etiqueta" axisLine={false} tickLine={false} tick={{ fill: "var(--ink-2)", fontSize: 13, fontWeight: 600 }} />
             <Tooltip content={<TooltipGrafica nombres={{ ventas: "Vendiste" }} />} cursor={{ fill: "var(--surface-hover)" }} />
-            <Bar dataKey="ventas" radius={[4, 4, 0, 0]} maxBarSize={56} animationDuration={700}>
+            <Bar dataKey="ventas" radius={[4, 4, 0, 0]} maxBarSize={48} animationDuration={700}>
               {meses.map((m) => (
                 <Cell key={m.etiqueta} fill={m.actual ? "var(--s1)" : "color-mix(in srgb, var(--s1) 40%, var(--surface))"} />
               ))}
               <LabelList dataKey="ventas" position="top" formatter={(v) => dineroCompacto(Number(v))}
-                style={{ fill: "var(--ink-2)", fontSize: 13, fontWeight: 600 }} />
+                style={{ fill: "var(--ink-2)", fontSize: 12, fontWeight: 600 }} />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
+      <p className="pista-grafica"><MousePointerClick size={13} aria-hidden="true" /> Toca una barra para ver ese mes.</p>
     </>
   );
+}
+
+/** Lo que se abre al picar algo del tablero. */
+type Detalle =
+  | { tipo: "como_te_fue" | "lo_que_viene" | "compras" | "impuestos" | "deudas" }
+  | { tipo: "mes"; i: number }
+  | { tipo: "producto"; p: ProductoSencillo };
+
+function DetalleSencillo({ d, x, onCerrar, onClara }: {
+  d: Inicio; x: Detalle; onCerrar: () => void; onClara: (tema: TemaClara) => void;
+}) {
+  const clara = (tema: TemaClara) => () => { onCerrar(); onClara(tema); };
+  const c = d.como_te_fue;
+  const v = d.lo_que_viene;
+
+  if (x.tipo === "como_te_fue" && c) {
+    const { Icono, texto } = ESTADO[c.estado];
+    return (
+      <Emergente ancho="chico" icono={TrendingUp} titulo={`¿Cómo te fue en ${c.mes}?`} onCerrar={onCerrar}
+        pie={<PieDetalle onClara={clara(TEMAS.como_te_fue)} a="/resumen" />}>
+        <p className={`estado-sencillo ${c.estado}`}><Icono size={18} aria-hidden="true" /> {texto}</p>
+        <p>{c.frase}</p>
+        <ListaCifras filas={[
+          { nombre: "Vendiste", valor: entero(c.ventas) },
+          { nombre: "Gastaste (mercancía y gastos)", valor: `− ${entero(c.gastaste)}` },
+          { nombre: c.te_quedo < 0 ? "Perdiste" : "Te quedó", valor: entero(Math.abs(c.te_quedo)), tono: c.te_quedo < 0 ? "mal" : "bien" },
+          ...(c.cambio_ventas !== null ? [{ nombre: "Contra el mes anterior", valor: <Cambio valor={c.cambio_ventas} /> }] : []),
+        ]} />
+      </Emergente>
+    );
+  }
+
+  if (x.tipo === "mes") {
+    const m = d.ventas_por_mes[x.i];
+    const ant = d.ventas_por_mes[x.i - 1];
+    const mejor = Math.max(...d.ventas_por_mes.map((s) => s.ventas));
+    if (!m) return null;
+    return (
+      <Emergente ancho="chico" icono={BarChart3} titulo={`Lo que vendiste en ${m.etiqueta}`} onCerrar={onCerrar}
+        pie={<PieDetalle onClara={clara(TEMAS.ventas)} a="/finanzas" />}>
+        <div className="emergente-cifra">
+          <strong>{entero(m.ventas)}</strong>
+          {ant && <Cambio valor={ant.ventas ? (m.ventas - ant.ventas) / ant.ventas : null} />}
+        </div>
+        {ant && <p className="muted">En {ant.etiqueta} habías vendido {entero(ant.ventas)}.</p>}
+        {m.ventas === mejor && d.ventas_por_mes.length > 1 && (
+          <p className="nota-sencilla bien"><CheckCircle2 size={18} aria-hidden="true" /><span>Es tu mejor mes de los últimos {d.ventas_por_mes.length}.</span></p>
+        )}
+      </Emergente>
+    );
+  }
+
+  if (x.tipo === "lo_que_viene" && v) {
+    return (
+      <Emergente ancho="chico" icono={TrendingUp} titulo={`Lo que viene en ${v.mes}`} subtitulo="Cálculo aproximado con tus ventas recientes"
+        onCerrar={onCerrar} pie={<PieDetalle onClara={clara(TEMAS.lo_que_viene)} a="/proyecciones" />}>
+        <ListaCifras filas={[
+          { nombre: "Vas a vender cerca de", valor: entero(v.ventas_esperadas) },
+          { nombre: "Te quedarían unos", valor: entero(v.ganancia_esperada), tono: v.ganancia_esperada < 0 ? "mal" : "bien" },
+          { nombre: "Dinero que tienes hoy", valor: entero(v.efectivo_hoy) },
+          { nombre: "A fin de mes tendrías", valor: entero(v.efectivo_fin_de_mes), tono: "fuerte" },
+        ]} />
+        <p className={`nota-sencilla ${v.te_alcanza ? "bien" : "mal"}`}>
+          {v.te_alcanza ? <CheckCircle2 size={18} aria-hidden="true" /> : <OctagonAlert size={18} aria-hidden="true" />}
+          <span>{v.te_alcanza ? "Sí te alcanza el dinero para tus pagos." : `El ${fechaLarga(v.fecha_riesgo ?? "")} podrías quedarte con muy poco dinero.`}</span>
+        </p>
+      </Emergente>
+    );
+  }
+
+  if (x.tipo === "compras" && v) {
+    return (
+      <Emergente ancho="chico" icono={ShoppingBasket} titulo="Compra pronto" subtitulo="Para que no te falte mercancía" onCerrar={onCerrar}
+        pie={<PieDetalle onClara={clara(TEMAS.lo_que_viene)} a="/proyecciones" />}>
+        {v.comprar.length > 0 ? (
+          <ListaCifras filas={[
+            ...v.comprar.map((p) => ({ nombre: <>{p.nombre} <span className="muted">· {cantidad(p.cantidad, p.unidad)}</span></>, valor: entero(p.costo) })),
+            { nombre: "En total, unos", valor: entero(v.total_compra), tono: "fuerte" as const },
+          ]} />
+        ) : (
+          <p className="nota-sencilla bien"><CheckCircle2 size={18} aria-hidden="true" /><span>Por ahora no necesitas comprar mercancía.</span></p>
+        )}
+      </Emergente>
+    );
+  }
+
+  if (x.tipo === "impuestos" && d.impuestos) {
+    const t = d.impuestos;
+    const h = t.hasta_la_anual;
+    return (
+      <Emergente ancho="chico" icono={Landmark} titulo="Tus impuestos" subtitulo={t.regimen} onCerrar={onCerrar}
+        pie={<PieDetalle onClara={clara(TEMAS.impuestos)} a="/impuestos" />}>
+        <h3 className="pequeno">Este mes</h3>
+        {t.a_pagar > 0 ? (
+          <p>
+            Por lo que vendiste <strong>{rangoDias(t.periodo_desde, t.periodo_hasta)}</strong> debes <strong>{entero(t.a_pagar)}</strong> de
+            impuestos. Tienes que pagarlo <strong>a más tardar el {diaMes(t.fecha_limite)}</strong>.
+          </p>
+        ) : (
+          <p>Por lo que vendiste <strong>{rangoDias(t.periodo_desde, t.periodo_hasta)}</strong> no te toca pagar impuestos.</p>
+        )}
+        {t.saldo_a_favor > 0 && <ListaCifras filas={[{ nombre: "Saldo a tu favor (IVA)", valor: entero(t.saldo_a_favor), tono: "bien" }]} />}
+
+        <h3 className="pequeno">De aquí a la declaración anual ({fechaLarga(h.fecha_anual)})</h3>
+        <ListaCifras filas={[
+          { nombre: `${h.pagos_mensuales} pagos mensuales (uno cada mes)`, valor: entero(h.total_mensuales) },
+          { nombre: "Ajuste en la declaración anual", valor: h.ajuste_anual === null ? "No se puede estimar" : entero(h.ajuste_anual) },
+          { nombre: "En total, más o menos", valor: entero(h.total), tono: "fuerte" },
+        ]} />
+        <p className="emergente-explica">
+          Cada mes pagas lo del mes anterior, a más tardar el día 17. En abril presentas la declaración anual, donde se ajusta lo de
+          todo el año. Los pagos que vienen se calcularon con el promedio de tus últimos meses: es un aproximado.
+        </p>
+      </Emergente>
+    );
+  }
+
+  if (x.tipo === "deudas" && d.deudas) {
+    const t = d.deudas;
+    return (
+      <Emergente ancho="chico" icono={CreditCard} titulo="Tus deudas" onCerrar={onCerrar}
+        pie={<PieDetalle onClara={clara(TEMAS.deudas)} a="/deudas" />}>
+        <ListaCifras filas={[
+          { nombre: "Debes en total", valor: entero(t.total), tono: "fuerte" },
+          { nombre: "Pagas al mes unos", valor: entero(t.pago_del_mes) },
+          ...(t.proximo_pago ? [{ nombre: `Próximo pago (${t.proximo_pago.acreedor})`, valor: `${entero(t.proximo_pago.monto)} · ${fechaCorta(t.proximo_pago.fecha)}` }] : []),
+        ]} />
+        {t.paga_primero && <p className="emergente-explica">Si te sobra dinero, abona primero a <strong>{t.paga_primero}</strong>: es la que más te conviene liquidar.</p>}
+      </Emergente>
+    );
+  }
+
+  if (x.tipo === "producto") {
+    const p = x.p;
+    const deja = p.precio - p.costo;
+    const Icono = ICONO_ESTADO[p.consejo_estado];
+    return (
+      <Emergente ancho="chico" icono={Package} titulo={p.nombre}
+        subtitulo={<span className={`semaforo ${p.inventario}`}>{INVENTARIO[p.inventario]}</span>} onCerrar={onCerrar}
+        pie={<PieDetalle onClara={clara(temaProducto(p))} a="/productos" />}>
+        <div className="mini-producto">
+          <Cifra nombre="Lo vendes en" valor={dinero(p.precio)} />
+          <Cifra nombre="Te cuesta" valor={dinero(p.costo)} />
+          <Cifra nombre={`Te deja por ${p.unidad}`} valor={dinero(deja)} tono={deja < 0 ? "mal" : "bien"} />
+          <Cifra nombre="Te quedan" valor={cantidad(p.te_quedan, p.unidad)} />
+        </div>
+        <p className={`nota-sencilla ${p.consejo_estado}`}><Icono size={18} aria-hidden="true" /><span>{p.consejo}</span></p>
+      </Emergente>
+    );
+  }
+  return null;
 }
 
 export function InicioSencillo() {
   const { usuario, empresa, empresas } = useSesion();
   const id = empresa?.id_empresa;
   const inicio = useApi<Inicio>(id ? `/empresas/${id}/inicio` : null);
-  const [tema, setTema] = useState<string | null>(null);
+  const [tema, setTema] = useState<TemaClara | null>(null);
+  const [detalle, setDetalle] = useState<Detalle | null>(null);
   const d = inicio.datos;
   const esDueno = empresas.find((e) => e.id_empresa === id)?.rol === "dueno";
   const nombre = usuario?.nombre.split(" ")[0] ?? "";
+  const preguntar = (clave: string) => setTema(TEMAS[clave]);
 
   if (empresa && !empresa.tiene_datos) {
     return (
@@ -212,123 +405,155 @@ export function InicioSencillo() {
 
   const c = d?.como_te_fue;
   const v = d?.lo_que_viene;
+  const COMPRAS_VISIBLES = 3;
   return (
     <div className="inicio-sencillo">
       <div className="saludo-sencillo">
         <h1>Hola, {nombre}</h1>
-        <button type="button" className="btn grande primario boton-clara" onClick={() => setTema("general")}>
-          <Sparkles size={22} /> Pregúntale a Clara
-        </button>
+        <p className="muted pista-saludo"><MousePointerClick size={15} aria-hidden="true" /> Toca cualquier tarjeta para ver más.</p>
       </div>
       {inicio.error && <Aviso tipo="error">{inicio.error}</Aviso>}
 
       {!d ? (
-        [0, 1, 2].map((i) => <div key={i} className="tarjeta-sencilla"><Esqueleto alto={26} ancho="50%" /><Esqueleto alto={90} /></div>)
+        <div className="tablero-sencillo" aria-busy="true" aria-label="Cargando">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="panel-sencillo"><Esqueleto alto={22} ancho="50%" /><Esqueleto alto={110} /></div>
+          ))}
+        </div>
       ) : (
         <>
-          {c && (
-            <TarjetaSencilla icono={TrendingUp} titulo={`¿Cómo te fue en ${c.mes}?`} tema="como_te_fue" detalles="/resumen" onPreguntar={setTema}>
-              <p className={`estado-sencillo ${c.estado}`}>
-                {(() => { const { Icono, texto } = ESTADO[c.estado]; return <><Icono size={22} aria-hidden="true" /> {texto}</>; })()}
-              </p>
-              <p className="frase-sencilla">{c.frase}</p>
-              <div className="cuenta-sencilla" aria-label={`Vendiste ${entero(c.ventas)}, gastaste ${entero(c.gastaste)}, te quedó ${entero(c.te_quedo)}`}>
-                <div><span>Vendiste</span><strong>{entero(c.ventas)}</strong></div>
-                <span className="signo" aria-hidden="true">−</span>
-                <div><span>Gastaste</span><strong>{entero(c.gastaste)}</strong></div>
-                <span className="signo" aria-hidden="true">=</span>
-                <div className={`resultado ${c.te_quedo < 0 ? "negativo" : ""}`}><span>{c.te_quedo < 0 ? "Perdiste" : "Te quedó"}</span><strong>{entero(Math.abs(c.te_quedo))}</strong></div>
-              </div>
-            </TarjetaSencilla>
+          {/* Fila de arriba: cómo te fue y la tendencia de ventas, lado a lado. */}
+          {(c || d.ventas_por_mes.length > 0) && (
+            <div className="tablero-sencillo fila-principal">
+              {c && (
+                <Panel icono={TrendingUp} titulo={`¿Cómo te fue en ${c.mes}?`} tema="como_te_fue" detalles="/resumen" onPreguntar={preguntar}
+                  onAbrir={() => setDetalle({ tipo: "como_te_fue" })}>
+                  <p className={`estado-sencillo ${c.estado}`}>
+                    {(() => { const { Icono, texto } = ESTADO[c.estado]; return <><Icono size={18} aria-hidden="true" /> {texto}</>; })()}
+                  </p>
+                  <div className="cuenta-sencilla" aria-label={`Vendiste ${entero(c.ventas)}, gastaste ${entero(c.gastaste)}, te quedó ${entero(c.te_quedo)}`}>
+                    <Cifra nombre="Vendiste" valor={entero(c.ventas)} />
+                    <span className="signo" aria-hidden="true">−</span>
+                    <Cifra nombre="Gastaste" valor={entero(c.gastaste)} />
+                    <span className="signo" aria-hidden="true">=</span>
+                    <Cifra nombre={c.te_quedo < 0 ? "Perdiste" : "Te quedó"} valor={entero(Math.abs(c.te_quedo))} tono={c.te_quedo < 0 ? "mal" : "bien"} />
+                  </div>
+                </Panel>
+              )}
+              {d.ventas_por_mes.length > 0 && (
+                <Panel icono={BarChart3} titulo="¿Vendes más o menos que antes?" tema="ventas" detalles="/finanzas" indice={1} onPreguntar={preguntar}>
+                  <GraficaVentas meses={d.ventas_por_mes} onMes={(i) => setDetalle({ tipo: "mes", i })} />
+                </Panel>
+              )}
+            </div>
           )}
 
-          {d.ventas_por_mes.length > 0 && (
-            <TarjetaSencilla icono={TrendingUp} titulo="¿Vendes más o menos que antes?" tema="ventas" detalles="/finanzas" onPreguntar={setTema}>
-              <GraficaVentas meses={d.ventas_por_mes} />
-            </TarjetaSencilla>
+          {/* Fila del medio: una cifra por tarjeta; el resto se ve al picarla. */}
+          {(v || d.impuestos || d.deudas) && (
+            <div className="tablero-sencillo fila-secundaria">
+              {v && (
+                <Panel icono={TrendingUp} titulo={`Lo que viene en ${v.mes}`} tema="lo_que_viene" detalles="/proyecciones" indice={2}
+                  onPreguntar={preguntar} onAbrir={() => setDetalle({ tipo: "lo_que_viene" })}>
+                  <Cifra nombre="Vas a vender cerca de" valor={entero(v.ventas_esperadas)} />
+                  <span className={`chip ${v.te_alcanza ? "ok" : "bad"}`}>
+                    {v.te_alcanza ? <CheckCircle2 size={14} aria-hidden="true" /> : <OctagonAlert size={14} aria-hidden="true" />}
+                    {v.te_alcanza ? "Te alcanza el dinero" : "Te podría faltar dinero"}
+                  </span>
+                </Panel>
+              )}
+
+              {v && (
+                <Panel icono={ShoppingBasket} titulo="Compra pronto" tema="lo_que_viene" detalles="/proyecciones" indice={3}
+                  onPreguntar={preguntar} onAbrir={() => setDetalle({ tipo: "compras" })}>
+                  {v.comprar.length > 0 ? (
+                    <>
+                      <Cifra nombre={`${v.comprar.length} ${v.comprar.length === 1 ? "producto" : "productos"}, unos`} valor={entero(v.total_compra)} />
+                      <p className="compras-nombres">
+                        {v.comprar.slice(0, COMPRAS_VISIBLES).map((p) => p.nombre).join(", ")}
+                        {v.comprar.length > COMPRAS_VISIBLES && ` y ${v.comprar.length - COMPRAS_VISIBLES} más`}
+                      </p>
+                    </>
+                  ) : (
+                    <span className="chip ok"><CheckCircle2 size={14} aria-hidden="true" /> No necesitas comprar</span>
+                  )}
+                </Panel>
+              )}
+
+              {d.impuestos && (
+                <Panel icono={Landmark} titulo="Impuestos" tema="impuestos" detalles="/impuestos" indice={4}
+                  onPreguntar={preguntar} onAbrir={() => setDetalle({ tipo: "impuestos" })}>
+                  {d.impuestos.a_pagar > 0 ? (
+                    <>
+                      <Cifra nombre={`Debes por lo vendido ${rangoDias(d.impuestos.periodo_desde, d.impuestos.periodo_hasta)}`}
+                        valor={entero(d.impuestos.a_pagar)} />
+                      <span className="chip warn"><CalendarDays size={14} aria-hidden="true" /> Págalo antes del {diaMes(d.impuestos.fecha_limite)}</span>
+                    </>
+                  ) : (
+                    <span className="chip ok"><CheckCircle2 size={14} aria-hidden="true" /> Por {d.impuestos.mes.toLowerCase()} no pagas</span>
+                  )}
+                  <p className="linea-anual">
+                    Hasta la anual ({diaMes(d.impuestos.hasta_la_anual.fecha_anual)}): unos <strong>{entero(d.impuestos.hasta_la_anual.total)}</strong>
+                  </p>
+                </Panel>
+              )}
+
+              {d.deudas && (
+                <Panel icono={CreditCard} titulo="Deudas" tema="deudas" detalles="/deudas" indice={5}
+                  onPreguntar={preguntar} onAbrir={() => setDetalle({ tipo: "deudas" })}>
+                  <Cifra nombre="Debes en total" valor={entero(d.deudas.total)} />
+                  <span className="chip">Pagas {entero(d.deudas.pago_del_mes)} al mes</span>
+                </Panel>
+              )}
+            </div>
           )}
 
+          {/* Hasta abajo: la lista de productos; cada renglón abre su mini resumen. */}
           {d.productos.length > 0 && (
-            <TarjetaSencilla icono={Package} titulo="Tus productos que más te dejan" tema="productos" detalles="/productos" onPreguntar={setTema}>
-              <div className="tabla-envoltura">
+            <Panel icono={Package} titulo="Tus productos que más te dejan" tema="productos" detalles="/productos" clase="panel-productos" indice={6} onPreguntar={preguntar}>
+              <p className="pista-grafica"><MousePointerClick size={13} aria-hidden="true" /> Toca un producto para ver su resumen.</p>
+              <div className="tabla-desplazable">
                 <table className="tabla tabla-sencilla">
-                  <thead><tr><th>Producto</th><th className="der">Vendiste</th><th className="der">Te dejó</th><th>¿Te queda?</th></tr></thead>
+                  <thead><tr><th>Producto</th><th className="der">Vendiste</th><th className="der">Te dejó</th><th>¿Te queda?</th><th aria-hidden="true" /></tr></thead>
                   <tbody>
                     {d.productos.map((p) => (
-                      <tr key={p.nombre}>
+                      <tr key={p.nombre} className="clic" tabIndex={0} aria-haspopup="dialog" aria-label={`${p.nombre}: ver resumen`}
+                        onClick={() => setDetalle({ tipo: "producto", p })}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setDetalle({ tipo: "producto", p }); } }}>
                         <td>{p.nombre}</td>
                         <td className="der num">{cantidad(p.vendiste, p.unidad)}</td>
                         <td className="der num"><strong>{entero(p.te_dejo)}</strong></td>
                         <td><span className={`semaforo ${p.inventario}`}>{INVENTARIO[p.inventario]}</span></td>
+                        <td className="der muted" aria-hidden="true"><ChevronRight size={16} /></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            </TarjetaSencilla>
-          )}
-
-          {v && (
-            <TarjetaSencilla icono={ShoppingBasket} titulo={`Lo que viene en ${v.mes}`} tema="lo_que_viene" detalles="/proyecciones" onPreguntar={setTema}>
-              <ul className="lista-sencilla">
-                <li>Vas a vender cerca de <strong>{entero(v.ventas_esperadas)}</strong> y te quedarían unos <strong>{entero(v.ganancia_esperada)}</strong>.</li>
-                <li className={v.te_alcanza ? "bien" : "mal"}>
-                  {v.te_alcanza ? <CheckCircle2 size={22} aria-hidden="true" /> : <OctagonAlert size={22} aria-hidden="true" />}
-                  <span>
-                    <strong>{v.te_alcanza ? "Sí te alcanza el dinero." : "Cuidado: te podría faltar dinero."}</strong>{" "}
-                    {v.te_alcanza
-                      ? `Hoy tienes ${entero(v.efectivo_hoy)} y a fin de mes tendrías unos ${entero(v.efectivo_fin_de_mes)}.`
-                      : `El ${fechaLarga(v.fecha_riesgo ?? "")} podrías quedarte con muy poco. Hoy tienes ${entero(v.efectivo_hoy)}.`}
-                  </span>
-                </li>
-              </ul>
-              {v.comprar.length > 0 ? (
-                <div className="compras-sencillas">
-                  <h3>Compra pronto:</h3>
-                  <ul>
-                    {v.comprar.map((p) => (
-                      <li key={p.nombre}><span>{p.nombre}</span><span className="num">{cantidad(p.cantidad, p.unidad)} · {entero(p.costo)}</span></li>
-                    ))}
-                  </ul>
-                  <p className="muted">En total, unos <strong>{entero(v.total_compra)}</strong>.</p>
-                </div>
-              ) : (
-                <p className="frase-sencilla">Por ahora no necesitas comprar mercancía.</p>
-              )}
-            </TarjetaSencilla>
-          )}
-
-          {(d.impuestos || d.deudas) && (
-            <div className="mini-sencillas">
-              {d.impuestos && (
-                <TarjetaSencilla icono={Landmark} titulo="Impuestos" tema="impuestos" detalles="/impuestos" onPreguntar={setTema}>
-                  {d.impuestos.a_pagar > 0 ? (
-                    <p className="frase-sencilla">
-                      Por {d.impuestos.mes.toLowerCase()} le toca pagar al SAT <strong>{entero(d.impuestos.a_pagar)}</strong>.
-                      Tienes hasta el <strong>{fechaLarga(d.impuestos.fecha_limite)}</strong>.
-                    </p>
-                  ) : (
-                    <p className="frase-sencilla">Por {d.impuestos.mes.toLowerCase()} no te toca pagar al SAT.</p>
-                  )}
-                </TarjetaSencilla>
-              )}
-              {d.deudas && (
-                <TarjetaSencilla icono={CreditCard} titulo="Deudas" tema="deudas" detalles="/deudas" onPreguntar={setTema}>
-                  <p className="frase-sencilla">
-                    Debes <strong>{entero(d.deudas.total)}</strong> en total. Al mes pagas unos <strong>{entero(d.deudas.pago_del_mes)}</strong>.
-                  </p>
-                  {d.deudas.paga_primero && <p className="frase-sencilla">Si te sobra dinero, abona primero a <strong>{d.deudas.paga_primero}</strong>.</p>}
-                </TarjetaSencilla>
-              )}
-            </div>
+            </Panel>
           )}
         </>
       )}
 
       <AnimatePresence>
+        {d && detalle && <DetalleSencillo key="detalle" d={d} x={detalle} onCerrar={() => setDetalle(null)} onClara={setTema} />}
+      </AnimatePresence>
+
+      {/* Clara siempre a la mano: botón flotante que abre su ventana de preguntas. */}
+      <AnimatePresence>
+        {!tema && !detalle && (
+          <motion.button type="button" className="fab-chat" onClick={() => setTema(TEMAS.general)} aria-label="Pregúntale a Clara"
+            initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+            whileHover={{ y: -3 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 260, damping: 22 }}>
+            <span className="orbe"><Sparkles size={16} /></span>
+            <span className="texto">Pregúntale a Clara</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {tema && (
           <Suspense fallback={null}>
-            <VentanaClara tema={TEMAS[tema]} onCerrar={() => setTema(null)} />
+            <VentanaClara tema={tema} onCerrar={() => setTema(null)} />
           </Suspense>
         )}
       </AnimatePresence>
