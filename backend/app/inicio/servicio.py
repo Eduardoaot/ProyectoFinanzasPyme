@@ -5,6 +5,7 @@ productos, proyecciones, impuestos y deudas) y las reduce a pocas cosas fáciles
 también las arma el código; el LLM solo entra cuando la persona le pregunta algo a Clara.
 """
 
+import math
 from datetime import date
 from typing import Literal
 
@@ -16,7 +17,7 @@ from app.config import UmbralesAlerta
 from app.deudas import servicio as deudas_srv
 from app.finance import consultas as q
 from app.finance import servicio as fin
-from app.finance.formato import dinero
+from app.finance.formato import dinero, numero, unidades
 from app.finance.periodos import MESES, fin_de_mes, sumar_meses
 from app.impuestos import servicio as imp_srv
 from app.proyecciones import servicio as proy_srv
@@ -25,6 +26,7 @@ Estado = Literal["verde", "amarillo", "rojo"]
 MESES_GRAFICA = 6
 MAX_PRODUCTOS = 8
 MAX_COMPRAS = 5
+DIAS_A_CUBRIR = 14                    # la sugerencia de compra alcanza para 2 semanas (igual que en Productos)
 
 
 class ComoTeFue(BaseModel):
@@ -49,6 +51,13 @@ class ProductoSencillo(BaseModel):
     vendiste: float                   # unidades del mes
     te_dejo: float                    # utilidad del mes
     inventario: Literal["verde", "amarillo", "rojo", "sin_movimiento"]
+    precio: float                     # precio de venta actual
+    costo: float                      # costo promedio actual
+    te_quedan: float                  # existencia hoy
+    dias_te_alcanzan: float | None    # días de inventario al ritmo de venta actual
+    pide: float                       # piezas sugeridas para cubrir DIAS_A_CUBRIR (0 = no hace falta)
+    consejo: str                      # una línea: qué hacer con este producto
+    consejo_estado: Estado            # color del consejo (rojo: actúa ya, amarillo: atención, verde: va bien)
 
 
 class Compra(BaseModel):
@@ -70,12 +79,23 @@ class LoQueViene(BaseModel):
     total_compra: float
 
 
+class HastaLaAnual(BaseModel):
+    fecha_anual: str                  # día límite de la declaración anual (30 de abril para personas físicas)
+    pagos_mensuales: int              # cuántos pagos mensuales vencen antes (incluido el del mes)
+    total_mensuales: float
+    ajuste_anual: float | None        # lo que quedaría en la anual; None si no se puede estimar
+    total: float                      # todo lo que pagarías desde hoy hasta la anual (aproximado)
+
+
 class ImpuestosSencillo(BaseModel):
     mes: str
     a_pagar: float
     fecha_limite: str
     saldo_a_favor: float
     regimen: str
+    periodo_desde: str                # días que cubre el pago del mes
+    periodo_hasta: str
+    hasta_la_anual: HastaLaAnual
 
 
 class DeudasSencillo(BaseModel):
@@ -110,6 +130,28 @@ def estado_del_mes(ventas: float, utilidad: float, cambio_ventas: float | None, 
     return "verde", f"En {mes} te fue bien: vendiste {dinero(round(ventas))} y te quedaron {dinero(round(utilidad))}."
 
 
+def cantidad_a_pedir(venta_diaria: float, existencia: float, dias: int = DIAS_A_CUBRIR) -> float:
+    """Piezas que faltan para cubrir `dias` al ritmo actual (redondeado hacia arriba, nunca negativo)."""
+    return float(max(0, math.ceil(venta_diaria * dias - existencia)))
+
+
+def consejo_producto(precio: float, costo: float, venta_diaria: float, dias_te_alcanzan: float | None,
+                     semaforo: str, pide: float, unidad: str, u: UmbralesAlerta) -> tuple[Estado, str]:
+    """Una sola línea, directa, con las cifras ya calculadas. Prioridad: se acaba > deja poco > no se vende > va bien."""
+    margen = (precio - costo) / precio if precio else None
+    if semaforo in ("rojo", "amarillo") and pide > 0:
+        urge = semaforo == "rojo"
+        return ("rojo" if urge else "amarillo"), (f"{'Se te acaba' if urge else 'Pide pronto'}: pide unas "
+                                                  f"{unidades(pide, unidad)} para {DIAS_A_CUBRIR // 7} semanas.")
+    if margen is not None and margen < u.margen_producto_bajo:
+        return "amarillo", f"Te deja poco: {dinero(round(precio - costo, 2))} por {unidad}. Revisa su precio o su costo."
+    if venta_diaria <= 0:
+        return "amarillo", "Este mes no se vendió. No pidas más por ahora."
+    if dias_te_alcanzan is not None:
+        return "verde", f"Vas bien: te alcanza para unos {numero(round(dias_te_alcanzan))} días."
+    return "verde", "Vas bien."
+
+
 def _nombre_mes(desde: date, hasta: date) -> str:
     nombre = MESES[desde.month - 1]
     return nombre if hasta == fin_de_mes(hasta) else f"lo que va de {nombre}"
@@ -134,8 +176,15 @@ def inicio(conn: Connection, id_empresa: int) -> Inicio:
                             actual=i == len(serie) - 1) for i, p in enumerate(serie)]
 
     prods = fin.productos(conn, id_empresa, desde, hasta, u.dias_inventario_bajo)
-    productos = [ProductoSencillo(nombre=p.nombre, unidad=p.unidad, vendiste=p.unidades, te_dejo=p.utilidad, inventario=p.semaforo)
-                 for p in sorted(prods.productos, key=lambda p: p.utilidad, reverse=True)[:MAX_PRODUCTOS]]
+    productos = []
+    for p in sorted(prods.productos, key=lambda p: p.utilidad, reverse=True)[:MAX_PRODUCTOS]:
+        pide = cantidad_a_pedir(p.venta_diaria, p.stock_actual)
+        consejo_estado, consejo = consejo_producto(p.precio_venta, p.costo_promedio, p.venta_diaria, p.dias_inventario,
+                                                   p.semaforo, pide, p.unidad, u)
+        productos.append(ProductoSencillo(
+            nombre=p.nombre, unidad=p.unidad, vendiste=p.unidades, te_dejo=p.utilidad, inventario=p.semaforo,
+            precio=p.precio_venta, costo=p.costo_promedio, te_quedan=p.stock_actual, dias_te_alcanzan=p.dias_inventario,
+            pide=pide, consejo=consejo, consejo_estado=consejo_estado))
 
     lo_que_viene = None
     pr = proy_srv.proyeccion(conn, id_empresa)
@@ -152,8 +201,13 @@ def inicio(conn: Connection, id_empresa: int) -> Inicio:
     impuestos = None
     imp = imp_srv.calcular(conn, id_empresa)
     if imp.get("tiene_datos"):
-        impuestos = ImpuestosSencillo(mes=imp["mes_etiqueta"], a_pagar=imp["total_a_pagar"], fecha_limite=imp["fecha_limite"],
-                                      saldo_a_favor=imp["saldo_a_favor"], regimen=imp["configuracion"]["regimen_nombre"])
+        h = imp["hasta_la_anual"]
+        impuestos = ImpuestosSencillo(
+            mes=imp["mes_etiqueta"], a_pagar=imp["total_a_pagar"], fecha_limite=imp["fecha_limite"],
+            saldo_a_favor=imp["saldo_a_favor"], regimen=imp["configuracion"]["regimen_nombre"],
+            periodo_desde=imp["periodo_desde"], periodo_hasta=imp["periodo_hasta"],
+            hasta_la_anual=HastaLaAnual(fecha_anual=h["hasta"], pagos_mensuales=h["pagos_mensuales"], total_mensuales=h["total_mensuales"],
+                                        ajuste_anual=h["ajuste_anual"], total=h["total"]))
 
     deudas = None
     dp = deudas_srv.panel(conn, id_empresa)

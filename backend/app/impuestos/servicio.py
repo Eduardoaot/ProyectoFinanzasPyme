@@ -98,6 +98,50 @@ def _evaluar_gasto(g: dict, regimen: str, p: dict) -> dict:
 DIFERENCIA_MENOR_REGIMEN = 1000.0   # por debajo de esto, cambiar de régimen casi no se nota
 
 
+def fecha_declaracion_anual(anio: int, tipo_persona: str) -> date:
+    """La declaración anual del año `anio` se presenta en abril (personas físicas) o en marzo (personas morales)."""
+    return date(anio + 1, 3, 31) if tipo_persona == "moral" else date(anio + 1, 4, 30)
+
+
+def ajuste_anual_estimado(regimen: str, ingresos_anual: float, isr_anual_tarifa: float | None, isr_mensual_anualizado: float,
+                          tabla_resico: list[dict]) -> float | None:
+    """Lo que quedaría por pagar en la declaración anual si cada mes pagaste lo que tocaba.
+
+    ISR del año estimado − ISR que habrás pagado en los pagos mensuales (ambos anualizados con los meses que hay).
+    Nunca negativo: si sale a favor, se muestra 0 (la devolución depende de más datos). Persona moral: sin estimado,
+    porque su ISR anual depende de la utilidad fiscal real y no solo del coeficiente.
+    """
+    if regimen == "626":
+        isr_anual = ingresos_anual * f.tasa_resico(ingresos_anual / 12, tabla_resico)
+    elif regimen == "612" and isr_anual_tarifa is not None:
+        isr_anual = isr_anual_tarifa
+    else:
+        return None
+    return f.r2(max(0.0, isr_anual - isr_mensual_anualizado))
+
+
+def pagos_hasta_la_anual(mes_ref: date, pago_actual: float, promedio_mensual: float, dia_pago: int,
+                         fecha_anual: date, ajuste_anual: float | None) -> dict:
+    """Todos los pagos que vencen desde el del mes actual hasta la declaración anual (incluida).
+
+    El del mes actual es el calculado; los siguientes se estiman con el promedio de los últimos meses.
+    """
+    pagos = [{"periodo": mes_ref.strftime("%Y-%m"), "fecha": fecha_limite(mes_ref.year, mes_ref.month, dia_pago),
+              "monto": f.r2(pago_actual), "estimado": False}]
+    mm = sumar_meses(mes_ref, 1)
+    while fecha_limite(mm.year, mm.month, dia_pago) <= fecha_anual:
+        pagos.append({"periodo": mm.strftime("%Y-%m"), "fecha": fecha_limite(mm.year, mm.month, dia_pago),
+                      "monto": f.r2(promedio_mensual), "estimado": True})
+        mm = sumar_meses(mm, 1)
+    mensuales = f.r2(sum(x["monto"] for x in pagos))
+    return {
+        "desde": pagos[0]["fecha"].isoformat(), "hasta": fecha_anual.isoformat(), "pagos_mensuales": len(pagos),
+        "total_mensuales": mensuales, "ajuste_anual": ajuste_anual,
+        "total": f.r2(mensuales + (ajuste_anual or 0.0)),
+        "detalle": [{**x, "fecha": x["fecha"].isoformat()} for x in pagos],
+    }
+
+
 def _comparar_regimen(*, ingresos_anual: float, deducciones_anual: float, resico_anual: float, ae_anual: float,
                       limite_resico: float, actual: str, meses_con_datos: int) -> dict:
     """Compara el ISR anual de RESICO y de Actividades Empresariales y explica el resultado con las cifras calculadas.
@@ -242,14 +286,18 @@ def calcular(conn: Connection, id_empresa: int, mes_ref: date | None = None) -> 
     # Calendario: pago del mes elegido y estimados de los siguientes con el promedio de los últimos 3 meses.
     ultimos = [x["total"] for x in meses[-3:]]
     promedio = sum(ultimos) / len(ultimos)
+    fecha_anual = fecha_declaracion_anual(anio, cfg["tipo_persona"])
+    isr_mensual_anualizado = sum(x["isr"] for x in meses) * anualiza
+    ajuste = ajuste_anual_estimado(regimen, ingresos_ytd * anualiza, comparador["actividades_empresariales_anual"] if comparador else None,
+                                   isr_mensual_anualizado, p["resico"]["tabla_mensual"])
+    hasta_la_anual = pagos_hasta_la_anual(mes_ref, actual["total"], promedio, p["dia_pago"], fecha_anual, ajuste)
     calendario = [{"fecha": actual["fecha_limite"], "concepto": f"Pago de {_etiqueta(anio, mes_n)} (ISR + IVA)",
                    "monto": actual["total"], "estimado": False}]
     for k in (1, 2):
         mm = sumar_meses(mes_ref, k)
         calendario.append({"fecha": fecha_limite(mm.year, mm.month, p["dia_pago"]).isoformat(),
                            "concepto": f"Pago de {_etiqueta(mm.year, mm.month)} (estimado)", "monto": f.r2(promedio), "estimado": True})
-    calendario.append({"fecha": f"{anio + 1}-0{3 if cfg['tipo_persona'] == 'moral' else 4}-{'31' if cfg['tipo_persona'] == 'moral' else '30'}",
-                       "concepto": "Declaración anual", "monto": None, "estimado": True})
+    calendario.append({"fecha": fecha_anual.isoformat(), "concepto": "Declaración anual (ajuste estimado)", "monto": ajuste, "estimado": True})
     if ptu_mensual:
         calendario.append({"fecha": ptu_mensual["fecha"], "concepto": "Pago de PTU a trabajadores", "monto": ptu_mensual["anual_estimada"], "estimado": True})
 
@@ -262,6 +310,9 @@ def calcular(conn: Connection, id_empresa: int, mes_ref: date | None = None) -> 
         "configuracion": {**cfg, "regimen_nombre": f.REGIMENES[regimen]}, "parametros_anio": p["anio"],
         "total_a_pagar": actual["total"], "isr": actual["isr"], "iva_a_pagar": actual["iva_a_pagar"],
         "saldo_a_favor": actual["saldo_a_favor"], "fecha_limite": actual["fecha_limite"],
+        # Qué días cubre el pago del mes: del 1 al último día con datos (el mes completo si ya terminó).
+        "periodo_desde": mes_ref.isoformat(), "periodo_hasta": min(fin_de_mes(mes_ref), corte).isoformat(),
+        "hasta_la_anual": hasta_la_anual,
         "apartar_por_cada_100": apartar_100, "tasa_efectiva_anual": f.r2(total_ytd / ingresos_ytd * 100) / 100 if ingresos_ytd else None,
         "total_acumulado_anio": f.r2(total_ytd), "meses": meses, "perdido_por_no_deducir": perdido,
         "comparador_regimen": comparador, "ptu": ptu_mensual, "limite_resico": alerta_limite,

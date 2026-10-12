@@ -248,3 +248,40 @@ def test_gastos_clasificados_traen_el_motivo(conn):
 
 def test_el_calculo_es_determinista(conn):
     assert srv.calcular(conn, 3) == srv.calcular(conn, 3)
+
+
+# --- Lo que pagarías hasta la declaración anual ----------------------------------------------------
+
+
+def test_fecha_de_la_declaracion_anual():
+    assert srv.fecha_declaracion_anual(2026, "fisica").isoformat() == "2027-04-30"
+    assert srv.fecha_declaracion_anual(2026, "moral").isoformat() == "2027-03-31"
+
+
+def test_pagos_hasta_la_anual_cuenta_cada_mes_que_vence_antes_de_abril():
+    from datetime import date
+    r = srv.pagos_hasta_la_anual(date(2026, 9, 1), pago_actual=1000, promedio_mensual=800, dia_pago=17,
+                                 fecha_anual=date(2027, 4, 30), ajuste_anual=500)
+    # septiembre (vence 17 oct, calculado) + oct … marzo (vencen nov … 17 abr, estimados) = 7 pagos
+    assert r["pagos_mensuales"] == 7
+    assert [x["fecha"] for x in r["detalle"]][::6] == ["2026-10-17", "2027-04-17"]
+    assert r["detalle"][0]["estimado"] is False and all(x["estimado"] for x in r["detalle"][1:])
+    assert r["total_mensuales"] == 1000 + 6 * 800
+    assert r["total"] == 1000 + 6 * 800 + 500
+    assert (r["desde"], r["hasta"]) == ("2026-10-17", "2027-04-30")
+
+
+def test_ajuste_anual_nunca_negativo_y_sin_estimado_para_personas_morales():
+    assert srv.ajuste_anual_estimado("612", 600_000, isr_anual_tarifa=40_000, isr_mensual_anualizado=35_000, tabla_resico=TABLA_RESICO) == 5_000
+    assert srv.ajuste_anual_estimado("612", 600_000, isr_anual_tarifa=30_000, isr_mensual_anualizado=35_000, tabla_resico=TABLA_RESICO) == 0
+    assert srv.ajuste_anual_estimado("601", 600_000, isr_anual_tarifa=None, isr_mensual_anualizado=1, tabla_resico=TABLA_RESICO) is None
+
+
+def test_calculo_trae_periodo_del_pago_y_total_hasta_abril(conn):
+    r = srv.calcular(conn, 1)
+    assert r["periodo_desde"] == "2026-09-01" and r["periodo_hasta"] == "2026-09-30"
+    h = r["hasta_la_anual"]
+    assert h["hasta"] == "2027-04-30" and h["desde"] == r["fecha_limite"]
+    assert h["detalle"][0]["monto"] == pytest.approx(r["total_a_pagar"])
+    assert h["total"] == pytest.approx(h["total_mensuales"] + (h["ajuste_anual"] or 0), abs=0.01)
+    assert any(c["concepto"].startswith("Declaración anual") and c["fecha"] == "2027-04-30" for c in r["calendario"])
